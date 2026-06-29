@@ -10,8 +10,7 @@ from flask import Blueprint, jsonify, render_template, request, session
 
 from core.auth import login_required, module_required
 from core.database import db
-from core.models import AuditLog, Incident
-from services.feedback_service import FeedbackService
+from core.models import AuditLog, Feedback, Incident
 from services.recommendation import RecommendationEngine
 from services.snow_client import ServiceNowClient
 
@@ -80,10 +79,11 @@ def recommend():
 @login_required
 def feedback():
     payload = request.get_json(silent=True) or {}
-    FeedbackService().save(
+    db.session.add(Feedback(
         recommendation_id = payload.get("recommendation_id"),
         value             = payload.get("value"),
         comments          = payload.get("comments", ""),
-    )
+    ))
+    db.session.commit()
     _audit("feedback", payload.get("value", ""))
     return jsonify({"message": "Feedback saved"})

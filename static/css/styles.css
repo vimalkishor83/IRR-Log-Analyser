@@ -120,26 +120,6 @@ body { background: #f0f2f5; font-size: .9rem; }
   padding: 1.25rem 1.5rem;
 }
 
-/* ── Page header bar ─────────────────────────────────────────────────────── */
-.irr-page-header {
-  background: linear-gradient(135deg, #1e3a5f 0%, #312e81 100%);
-  border-radius: 14px;
-  padding: 1rem 1.4rem;
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.irr-page-header-icon {
-  width: 40px; height: 40px;
-  border-radius: 11px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.15rem;
-  flex-shrink: 0;
-}
-.irr-page-header-title { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin-bottom: .1rem; }
-.irr-page-header-sub   { font-size: .75rem; color: #94a3b8; }
-
 /* ── Card shell ──────────────────────────────────────────────────────────── */
 .irr-card {
   background: #fff;
@@ -152,7 +132,6 @@ body { background: #f0f2f5; font-size: .9rem; }
 /* Coloured left-border accent variants */
 .irr-card-accent-blue   { border-left: 3px solid #3b82f6; }
 .irr-card-accent-indigo { border-left: 3px solid #6366f1; }
-.irr-card-accent-green  { border-left: 3px solid #10b981; }
 .irr-card-accent-amber  { border-left: 3px solid #f59e0b; }
 .irr-card-accent-red    { border-left: 3px solid #ef4444; }
 
@@ -220,15 +199,6 @@ body { background: #f0f2f5; font-size: .9rem; }
 
 /* ── Charts ──────────────────────────────────────────────────────────────── */
 .chart-wrap { position: relative; height: 220px; }
-
-/* Chart card gradient header strip */
-.chart-card-header {
-  background: linear-gradient(135deg, #eff6ff, #f5f3ff);
-  border-radius: 10px 10px 0 0;
-  padding: .6rem 1rem;
-  margin: -1.1rem -1.25rem .85rem;
-  border-bottom: 1px solid #e2e8f0;
-}
 
 /* ── Top Issues ──────────────────────────────────────────────────────────── */
 .top-issue-row {
