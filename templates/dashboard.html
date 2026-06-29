@@ -1,0 +1,190 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IRR â€” Log Analyzer</title>
+  <link href="/static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/static/css/styles.css" rel="stylesheet">
+</head>
+<body>
+{% include 'nav.html' %}
+
+<main class="irr-main">
+
+  <!-- â•â• Row 1: Upload + KPI cards â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="row g-3 mb-3 align-items-stretch">
+
+    <!-- Upload panel -->
+    <div class="col-xl-3 col-lg-4">
+      <div class="irr-card h-100" style="padding-top:0">
+        <div class="upload-header"><div class="irr-card-title mb-0"><i class="bi bi-folder2-open me-2" style="color:#60a5fa"></i>Log File Selection</div></div>
+        <div class="mb-3">
+          <label class="form-label small text-muted mb-1">Single or multiple log files</label>
+          <input id="filePicker" class="form-control form-control-sm" type="file" multiple accept=".log,.txt,.out,.csv,.gz">
+          <div id="filePickerText" class="form-text">Supported: .log .txt .out .csv .gz</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted mb-1">Complete folder</label>
+          <input id="folderPicker" class="form-control form-control-sm" type="file" webkitdirectory multiple>
+          <div id="folderPickerText" class="form-text">Logs inside a single folder</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button id="startAnalysis" class="btn btn-primary btn-sm"><i class="bi bi-play-fill me-1"></i>Analyse</button>
+          <button id="clearAnalysis" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Clear</button>
+          <button id="loadSample" class="btn btn-outline-success btn-sm"><i class="bi bi-database me-1"></i>Load Sample</button>
+        </div>
+        <div id="messages" class="small text-secondary mt-2"></div>
+      </div>
+    </div>
+
+    <!-- KPI cards â€” 2Ã—4 grid -->
+    <div class="col-xl-9 col-lg-8">
+      <div class="kpi-grid-new">
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon"><i class="bi bi-file-earmark-text"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Total Logs</div><div class="kpi-value" id="totalLogs">0</div></div>
+        </div>
+        <div class="kpi-card kpi-red">
+          <div class="kpi-icon"><i class="bi bi-exclamation-octagon"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Total Errors</div><div class="kpi-value" id="totalErrors">0</div></div>
+        </div>
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon"><i class="bi bi-fingerprint"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Unique Errors</div><div class="kpi-value" id="uniqueErrors">0</div></div>
+        </div>
+        <div class="kpi-card kpi-darkred">
+          <div class="kpi-icon"><i class="bi bi-lightning-charge"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Critical</div><div class="kpi-value" id="criticalErrors">0</div></div>
+        </div>
+        <div class="kpi-card kpi-amber">
+          <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Warnings</div><div class="kpi-value" id="warningCount">0</div></div>
+        </div>
+        <div class="kpi-card kpi-teal">
+          <div class="kpi-icon"><i class="bi bi-grid-1x2"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Top App</div><div class="kpi-value kpi-value-sm" id="topApplication">â€”</div></div>
+        </div>
+        <div class="kpi-card kpi-slate">
+          <div class="kpi-icon"><i class="bi bi-server"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Top Server</div><div class="kpi-value kpi-value-sm" id="topServer">â€”</div></div>
+        </div>
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon"><i class="bi bi-lightbulb"></i></div>
+          <div class="kpi-body"><div class="kpi-label">Knowledge Base</div><div class="kpi-value" id="recommendationCount">0</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- â•â• Root cause banner (shown after analysis) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="rootCauseBanner" style="display:none" class="mb-3">
+    <div class="irr-card" style="border-left:4px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fff)">
+      <div class="d-flex align-items-center gap-3">
+        <div style="width:36px;height:36px;border-radius:9px;background:#f59e0b;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="bi bi-exclamation-triangle-fill text-white"></i>
+        </div>
+        <div>
+          <div class="small fw-semibold text-muted mb-1">Probable Root Cause</div>
+          <div id="rootCauseText" class="fw-semibold" style="color:#92400e"></div>
+        </div>
+        <button type="button" class="btn-close ms-auto" onclick="document.getElementById('rootCauseBanner').style.display='none'"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- â•â• Row 2: Charts + Top Issues â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="row g-3 mb-3">
+
+    <!-- Severity donut -->
+    <div class="col-md-3">
+      <div class="irr-card h-100 irr-card-accent-red">
+        <div class="irr-card-title"><i class="bi bi-pie-chart me-2 text-danger"></i>Severity Distribution</div>
+        <div class="chart-wrap"><canvas id="severityChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- App bar chart -->
+    <div class="col-md-3">
+      <div class="irr-card h-100 irr-card-accent-blue">
+        <div class="irr-card-title"><i class="bi bi-bar-chart me-2 text-primary"></i>App Errors</div>
+        <div class="chart-wrap"><canvas id="appChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Timeline chart -->
+    <div class="col-md-3">
+      <div class="irr-card h-100 irr-card-accent-indigo">
+        <div class="irr-card-title"><i class="bi bi-graph-up me-2" style="color:#6366f1"></i>Errors Over Time</div>
+        <div class="chart-wrap"><canvas id="timelineChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Top Issues -->
+    <div class="col-md-3">
+      <div class="irr-card h-100 d-flex flex-column irr-card-accent-amber">
+        <div class="irr-card-title d-flex align-items-center justify-content-between">
+          <span><i class="bi bi-fire me-2 text-warning"></i>Top Issues</span>
+          <span class="badge bg-secondary fw-normal" id="topIssuesCount" style="font-size:.7rem"></span>
+        </div>
+        <div id="topIssues" class="flex-fill" style="overflow-y:auto">
+          <p class="text-muted small mb-0 mt-1">Load log files to see recurring issues.</p>
+        </div>
+        <div class="pt-2 border-top small text-muted mt-2" id="topIssuesHint" style="display:none">
+          <i class="bi bi-cursor me-1"></i>Click an issue to find resolution steps.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- â•â• Row 3: Log viewer â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="irr-card irr-card-accent-indigo">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+      <div class="irr-card-title mb-0"><i class="bi bi-journals me-2" style="color:#6366f1"></i>Detailed Log Viewer</div>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <select id="severityFilter" class="form-select form-select-sm" style="width:auto">
+          <option value="">All</option>
+          <option>CRITICAL</option><option>ERROR</option><option>WARN</option>
+          <option>INFO</option><option>DEBUG</option><option>FATAL</option>
+        </select>
+        <input id="logSearch" class="form-control form-control-sm" placeholder="Searchâ€¦" style="width:180px">
+        <button id="exportCsv" class="btn btn-outline-secondary btn-sm" title="Export current view to CSV">
+          <i class="bi bi-download me-1"></i>Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="log-table-head">
+          <tr>
+            <th style="white-space:nowrap">Time</th>
+            <th>Severity</th>
+            <th>App</th>
+            <th>Server</th>
+            <th>Error Code</th>
+            <th>Exception</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody id="logRows"></tbody>
+      </table>
+    </div>
+    <!-- Pagination -->
+    <div class="d-flex align-items-center justify-content-between mt-2" id="paginationBar" style="display:none!important">
+      <div class="small text-muted" id="pageInfo"></div>
+      <div class="d-flex gap-1">
+        <button id="prevPage" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></button>
+        <button id="nextPage" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="/static/lib/chartjs/chart.umd.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
+
+

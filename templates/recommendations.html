@@ -1,0 +1,374 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recommendations â€” IRR</title>
+  <link href="/static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/static/css/styles.css" rel="stylesheet">
+  <style>
+    body { background: #f0f2f5; }
+
+    /* â”€â”€ Search bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .search-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      padding: 1.5rem 1.75rem;
+    }
+
+    /* â”€â”€ Top-match hero card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .top-match-card {
+      border-radius: 14px;
+      border: 2px solid #2563eb;
+      background: linear-gradient(135deg, #eff6ff 0%, #fff 60%);
+      box-shadow: 0 4px 20px rgba(37,99,235,.12);
+    }
+    .top-match-badge {
+      background: #2563eb;
+      color: #fff;
+      font-size: .72rem;
+      padding: .25rem .6rem;
+      border-radius: 20px;
+      letter-spacing: .04em;
+    }
+
+    /* â”€â”€ Other result cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .rec-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      transition: box-shadow .15s, transform .15s;
+    }
+    .rec-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-1px); }
+
+    /* â”€â”€ Confidence ring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .conf-ring {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700;
+      flex-shrink: 0;
+      border: 4px solid transparent;
+    }
+    .conf-high  { background:#dcfce7; color:#15803d; border-color:#16a34a; }
+    .conf-mid   { background:#fef9c3; color:#a16207; border-color:#ca8a04; }
+    .conf-low   { background:#fee2e2; color:#b91c1c; border-color:#dc2626; }
+
+    /* Small inline badge for other cards */
+    .conf-pill {
+      display: inline-block;
+      min-width: 54px;
+      text-align: center;
+      border-radius: 20px;
+      font-size: .82rem;
+      font-weight: 700;
+      padding: .2rem .6rem;
+    }
+    .conf-pill.high { background:#dcfce7; color:#15803d; }
+    .conf-pill.mid  { background:#fef9c3; color:#a16207; }
+    .conf-pill.low  { background:#fee2e2; color:#b91c1c; }
+
+    /* â”€â”€ Meta chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .meta-chip {
+      display: inline-flex; align-items: center; gap: .3rem;
+      background: #f1f5f9; border-radius: 20px;
+      font-size: .76rem; padding: .2rem .65rem;
+      color: #475569;
+    }
+
+    /* â”€â”€ Resolution block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .resolution-block {
+      background: #f8fafc;
+      border-left: 4px solid #2563eb;
+      border-radius: 0 6px 6px 0;
+      padding: .75rem 1rem;
+      font-size: .88rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+    .root-cause-block {
+      background: #fffbeb;
+      border-left: 4px solid #f59e0b;
+      border-radius: 0 6px 6px 0;
+      padding: .75rem 1rem;
+      font-size: .88rem;
+      white-space: pre-wrap;
+    }
+
+    /* â”€â”€ Feedback buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .feedback-btn { border-radius: 20px; font-size: .8rem; transition: all .15s; }
+    .feedback-btn.selected-helpful       { background:#16a34a; color:#fff; border-color:#16a34a; }
+    .feedback-btn.selected-partial       { background:#ca8a04; color:#fff; border-color:#ca8a04; }
+    .feedback-btn.selected-nothelpful    { background:#dc2626; color:#fff; border-color:#dc2626; }
+
+    /* â”€â”€ Similarity bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .sim-bar-wrap { background:#e2e8f0; border-radius:4px; height:6px; overflow:hidden; }
+    .sim-bar      { height:100%; border-radius:4px; transition: width .4s; }
+
+    /* â”€â”€ Skeleton loader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .skeleton { background: linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%); background-size:400% 100%; animation:shimmer 1.4s infinite; border-radius:6px; }
+    @keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* â”€â”€ Source badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .src-incident { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .src-kb       { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+
+    /* â”€â”€ Live incident banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .live-inc-banner {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border: 1.5px solid #fcd34d;
+      border-left: 4px solid #f59e0b;
+      border-radius: 10px;
+      padding: .85rem 1.1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: .9rem;
+    }
+    .live-inc-icon {
+      width: 34px; height: 34px;
+      background: #f59e0b;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: .95rem;
+      flex-shrink: 0;
+    }
+    .live-inc-state {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .72rem; font-weight: 600;
+      padding: .2rem .55rem;
+      border-radius: 20px;
+    }
+    .state-new         { background:#dbeafe; color:#1d4ed8; }
+    .state-in-progress { background:#fef3c7; color:#92400e; }
+    .state-open        { background:#fce7f3; color:#9d174d; }
+    .state-other       { background:#f1f5f9; color:#475569; }
+
+    /* â”€â”€ Idle state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .idle-section-label {
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #94a3b8;
+    }
+
+    .idle-step {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      display: flex;
+      gap: .85rem;
+      align-items: flex-start;
+      height: 100%;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+
+    .idle-step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .idle-chip {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: .5rem .85rem;
+      text-align: left;
+      font-size: .82rem;
+      color: #374151;
+      cursor: pointer;
+      transition: background .12s, border-color .12s, color .12s;
+      width: 100%;
+    }
+    .idle-chip:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+
+    .idle-tip {
+      font-size: .79rem;
+      color: #374151;
+      padding: .25rem 0;
+      display: flex;
+      align-items: flex-start;
+      gap: .1rem;
+      line-height: 1.4;
+    }
+
+    .recent-chip {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: .25rem .7rem;
+      font-size: .78rem;
+      color: #374151;
+      cursor: pointer;
+      margin: .2rem .2rem .2rem 0;
+      transition: background .12s;
+    }
+    .recent-chip:hover { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+
+    .text-orange { color: #c2410c; }
+    .text-purple { color: #7c3aed; }
+  </style>
+</head>
+<body>
+{% include 'nav.html' %}
+
+<main class="container-fluid px-4 py-4" style="max-width:1100px">
+
+  <!-- â”€â”€ Search bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <div class="search-card mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-search text-primary fs-5"></i>
+      <h5 class="mb-0 fw-semibold">Intelligent Resolution Recommender</h5>
+      <span class="ms-auto text-muted small" id="indexStatus"></span>
+    </div>
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small mb-1 text-muted">Incident Number <span class="text-muted fw-normal">(optional)</span></label>
+        <input id="incidentNumber" class="form-control" placeholder="e.g. INC0001234">
+      </div>
+      <div class="col-md-7">
+        <label class="form-label small mb-1 text-muted">Error / Exception / Log Message</label>
+        <input id="queryText" class="form-control" placeholder="Paste error message, exception, or descriptionâ€¦">
+      </div>
+      <div class="col-md-2">
+        <button id="searchBtn" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-search"></i> Search
+        </button>
+      </div>
+    </div>
+    <!-- Quick-tip chips -->
+    <div class="mt-2 d-flex flex-wrap gap-2" id="quickChips" style="display:none!important"></div>
+  </div>
+
+  <!-- â”€â”€ Live incident banner (shown when SNOW returns an open/in-progress incident) -->
+  <div id="liveIncidentBanner" style="display:none" class="live-inc-banner mb-3"></div>
+
+  <!-- â”€â”€ Results area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <div id="resultsArea"></div>
+
+  <!-- â”€â”€ Idle state (shown before any search) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <div id="idleState">
+
+    <!-- How it works -->
+    <div class="row g-3 mb-3">
+      <div class="col-12">
+        <div class="idle-section-label"><i class="bi bi-info-circle me-1"></i>How it works</div>
+      </div>
+      <div class="col-md-4">
+        <div class="idle-step">
+          <div class="idle-step-num">1</div>
+          <div>
+            <div class="fw-semibold small mb-1">Paste your error</div>
+            <div class="text-muted" style="font-size:.8rem">Copy the exception, error code, or log message from your system and paste it in the search box above.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="idle-step">
+          <div class="idle-step-num">2</div>
+          <div>
+            <div class="fw-semibold small mb-1">AI matches incidents</div>
+            <div class="text-muted" style="font-size:.8rem">The engine searches past incidents and KB articles using TF-IDF similarity to find the closest matches.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="idle-step">
+          <div class="idle-step-num">3</div>
+          <div>
+            <div class="fw-semibold small mb-1">Apply the resolution</div>
+            <div class="text-muted" style="font-size:.8rem">Review root cause and resolution steps ranked by confidence. Mark feedback to improve future results.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+
+      <!-- Try these examples -->
+      <div class="col-md-5">
+        <div class="irr-card h-100">
+          <div class="irr-card-title"><i class="bi bi-lightning me-2 text-warning"></i>Try these examples</div>
+          <div class="d-flex flex-column gap-2" id="exampleChips">
+            <button class="idle-chip" onclick="prefill('ORA-12541 TNS no listener')">
+              <i class="bi bi-database text-danger me-2"></i>ORA-12541 TNS no listener
+            </button>
+            <button class="idle-chip" onclick="prefill('OutOfMemoryError java heap space')">
+              <i class="bi bi-cpu text-orange me-2"></i>OutOfMemoryError java heap space
+            </button>
+            <button class="idle-chip" onclick="prefill('Connection refused calling inventory service')">
+              <i class="bi bi-plug text-purple me-2"></i>Connection refused calling inventory service
+            </button>
+            <button class="idle-chip" onclick="prefill('SSL certificate expired handshake failure')">
+              <i class="bi bi-shield-x text-danger me-2"></i>SSL certificate expired handshake failure
+            </button>
+            <button class="idle-chip" onclick="prefill('disk space threshold exceeded log rotation')">
+              <i class="bi bi-hdd text-secondary me-2"></i>Disk space threshold exceeded
+            </button>
+            <button class="idle-chip" onclick="prefill('Nightly batch job failed ETL timeout')">
+              <i class="bi bi-clock-history text-primary me-2"></i>Nightly batch job failed ETL timeout
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips + recent -->
+      <div class="col-md-7">
+        <div class="row g-3 h-100">
+
+          <!-- Tips -->
+          <div class="col-12">
+            <div class="irr-card">
+              <div class="irr-card-title"><i class="bi bi-stars me-2 text-primary"></i>Tips for better results</div>
+              <div class="row g-2">
+                <div class="col-sm-6">
+                  <div class="idle-tip"><i class="bi bi-check-circle-fill text-success me-2"></i>Include the full exception class name</div>
+                  <div class="idle-tip"><i class="bi bi-check-circle-fill text-success me-2"></i>Add the error code if known (e.g. ORA-12541)</div>
+                  <div class="idle-tip"><i class="bi bi-check-circle-fill text-success me-2"></i>Mention the affected application or service</div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="idle-tip"><i class="bi bi-x-circle-fill text-danger me-2"></i>Avoid pasting full stack traces (just the first line)</div>
+                  <div class="idle-tip"><i class="bi bi-x-circle-fill text-danger me-2"></i>Remove timestamps and line numbers</div>
+                  <div class="idle-tip"><i class="bi bi-x-circle-fill text-danger me-2"></i>Don't include internal IPs or hostnames</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent searches -->
+          <div class="col-12">
+            <div class="irr-card">
+              <div class="irr-card-title d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history me-2 text-secondary"></i>Recent searches</span>
+                <button class="btn btn-link btn-sm p-0 text-muted" onclick="clearHistory()" id="clearHistoryBtn" style="display:none;font-size:.75rem">Clear</button>
+              </div>
+              <div id="recentSearches">
+                <p class="text-muted small mb-0">Your recent searches will appear here.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #idleState -->
+
+</main>
+
+<script src="/static/js/recommendations.js"></script>
+</body>
+</html>
+
+

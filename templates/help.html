@@ -1,0 +1,395 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Help &amp; FAQ â€” IRR Platform</title>
+    <link href="/static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <style>
+        .help-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #4f46e5 100%);
+            color: #fff;
+            border-radius: 12px;
+            padding: 2.5rem 2rem 2rem;
+            margin-bottom: 2rem;
+        }
+        .help-hero h1 { font-size: 1.8rem; font-weight: 700; }
+        .help-hero p  { opacity: .8; margin: 0; }
+
+        .role-card {
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .role-admin   { background: #eff6ff; border-left: 4px solid #2563eb; }
+        .role-analyst { background: #f0fdf4; border-left: 4px solid #16a34a; }
+
+        .faq-section  { margin-bottom: 2rem; }
+        .faq-section h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: .5rem;
+            margin-bottom: 1rem;
+        }
+        /* â”€â”€ Native <details> accordion â”€â”€ */
+        details.faq-item {
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07);
+            margin-bottom: .5rem;
+            background: #fff;
+            overflow: hidden;
+        }
+        details.faq-item summary {
+            font-weight: 600;
+            font-size: .95rem;
+            padding: .85rem 1.1rem;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #1e293b;
+            user-select: none;
+        }
+        details.faq-item summary::-webkit-details-marker { display: none; }
+        details.faq-item summary::after {
+            content: "\F282";           /* bi-chevron-down */
+            font-family: "bootstrap-icons";
+            font-size: .85rem;
+            color: #6b7280;
+            transition: transform .2s;
+            flex-shrink: 0;
+        }
+        details.faq-item[open] summary {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+        details.faq-item[open] summary::after {
+            transform: rotate(180deg);
+        }
+        details.faq-item summary:hover { background: #f8fafc; }
+        details.faq-item[open] summary:hover { background: #eff6ff; }
+        .faq-body {
+            font-size: .92rem;
+            color: #374151;
+            line-height: 1.7;
+            padding: .85rem 1.1rem 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .data-table th { background: #1e3a8a; color: #fff; font-weight: 600; }
+        .data-table td { vertical-align: top; font-size: .88rem; }
+        .data-table tr:hover td { background: #f8fafc; }
+
+        .step-badge {
+            width: 28px; height: 28px;
+            background: #2563eb; color: #fff;
+            border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .8rem; flex-shrink: 0;
+        }
+        .tip-box {
+            background: #f0fdf4; border: 1px solid #bbf7d0;
+            border-radius: 8px; padding: 1rem 1.25rem;
+            font-size: .9rem;
+        }
+        .warn-box {
+            background: #fff7ed; border: 1px solid #fed7aa;
+            border-radius: 8px; padding: 1rem 1.25rem;
+            font-size: .9rem;
+        }
+    </style>
+</head>
+<body>
+{% include 'nav.html' %}
+<main class="container p-4" style="max-width:900px;">
+
+    <!-- Hero -->
+    <div class="help-hero">
+        <h1><i class="bi bi-question-circle me-2"></i>Help &amp; FAQ</h1>
+        <p>Everything you need to know about using the IRR Platform â€” for both admins and end users.</p>
+    </div>
+
+    <!-- Role guide -->
+    <div class="panel mb-4">
+        <h2 class="fw-bold mb-3" style="color:#1e3a8a;">
+            <i class="bi bi-people me-2"></i>Who Can Do What
+        </h2>
+        <div class="role-card role-admin">
+            <div class="fw-bold mb-1"><i class="bi bi-shield-fill-check text-primary me-2"></i>Admin</div>
+            <div class="text-secondary small">Full access â€” can sync data from ServiceNow, retrain the model, import CSV, manage users, and maintain the Knowledge Repository. Admins can see all pages regardless of module settings.</div>
+        </div>
+        <div class="role-card role-analyst">
+            <div class="fw-bold mb-1"><i class="bi bi-person-badge text-success me-2"></i>Analyst</div>
+            <div class="text-secondary small">
+                Access is controlled by the modules an Admin assigns. By default, Analysts can use <strong>Log Analyzer</strong> and <strong>Recommendations</strong>.
+                An Admin can also grant access to <strong>Knowledge</strong> for analysts who need to manage KB entries.
+                If you can't see a page, ask your Admin to add that module to your account.
+            </div>
+        </div>
+    </div>
+
+    <!-- What data gets synced -->
+    <div class="panel mb-4">
+        <h2 class="fw-bold mb-3" style="color:#1e3a8a;">
+            <i class="bi bi-arrow-repeat me-2"></i>What Data Gets Synced from ServiceNow
+        </h2>
+        <p class="text-secondary small mb-3">
+            The platform only pulls <strong>Resolved</strong> and <strong>Closed</strong> incidents.
+            Open and In-Progress incidents are never stored â€” they are looked up live when you search by incident number.
+        </p>
+        <table class="table table-bordered data-table">
+            <thead>
+                <tr>
+                    <th>ServiceNow Field</th>
+                    <th>Stored As</th>
+                    <th>Used For</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>number</td><td>incident_number</td><td>Exact match search</td></tr>
+                <tr><td>short_description</td><td>error_description</td><td>TF-IDF similarity search</td></tr>
+                <tr><td>description</td><td>exception_message</td><td>TF-IDF similarity search</td></tr>
+                <tr><td>work_notes / description</td><td>root_cause</td><td>Displayed in results</td></tr>
+                <tr><td>close_notes</td><td>resolution</td><td>The recommended fix shown to users</td></tr>
+                <tr><td>category</td><td>application</td><td>Filtering &amp; display</td></tr>
+                <tr><td>subcategory</td><td>server</td><td>Display</td></tr>
+                <tr><td>assignment_group</td><td>assignment_group</td><td>Group filter &amp; display</td></tr>
+                <tr><td>state</td><td>status</td><td>Validation â€” must be Resolved/Closed</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sync validation rules -->
+    <div class="panel mb-4">
+        <h2 class="fw-bold mb-3" style="color:#1e3a8a;">
+            <i class="bi bi-shield-check me-2"></i>Data Validation Rules Applied During Sync
+        </h2>
+        <p class="text-secondary small mb-3">
+            Every record fetched from ServiceNow is checked against the rules below <strong>before</strong> it is saved.
+            Records that fail any rule are counted as "skipped" â€” the sync summary in Admin shows how many failed and which rules fired most.
+        </p>
+
+        <h6 class="fw-bold mb-2 mt-3" style="color:#1e3a8a;"><i class="bi bi-file-earmark-text me-1"></i> Incident Validation (6 rules)</h6>
+        <table class="table table-bordered data-table mb-3">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Rule</th>
+                    <th>What is checked</th>
+                    <th>Skipped ifâ€¦</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td><strong>Required fields</strong></td>
+                    <td>incident number, short_description, close_notes</td>
+                    <td>Any of these fields is empty or missing</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><strong>Minimum length</strong></td>
+                    <td>short_description length, close_notes length</td>
+                    <td>Description &lt; 10 characters <em>or</em> resolution &lt; 20 characters</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><strong>Junk / placeholder text</strong></td>
+                    <td>description and resolution content</td>
+                    <td>Text is a known throwaway phrase such as <code>test</code>, <code>n/a</code>, <code>na</code>, <code>none</code>, <code>tbd</code>, <code>todo</code>, <code>done</code>, <code>fixed</code>, <code>closed</code>, <code>resolved</code>, <code>ok</code>, <code>yes</code>, <code>no</code>, <code>see above</code>, <code>see comments</code>, <code>as per call</code>, <code>as discussed</code>, <code>please see above</code>, <code>refer above</code>, <code>as per email</code></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><strong>Duplicate resolution</strong></td>
+                    <td>close_notes text vs. all existing resolutions in the DB</td>
+                    <td>The same resolution text already appears on 5 or more incidents (copy-paste template detected)</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><strong>State verification</strong></td>
+                    <td>state field value</td>
+                    <td>State is not <code>Resolved</code> or <code>Closed</code> (e.g. still Open or In Progress)</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td><strong>Assignment group filter</strong></td>
+                    <td>assignment_group field vs. <code>SERVICENOW_ASSIGNMENT_GROUPS</code> in .env</td>
+                    <td>Group filter is configured and this record's group is not in the allowed list. If no filter is set, all groups pass.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h6 class="fw-bold mb-2 mt-3" style="color:#1e3a8a;"><i class="bi bi-journal-richtext me-1"></i> KB Article Validation (3 rules)</h6>
+        <table class="table table-bordered data-table mb-3">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Rule</th>
+                    <th>What is checked</th>
+                    <th>Skipped ifâ€¦</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td><strong>Minimum title length</strong></td>
+                    <td>short_description / title field</td>
+                    <td>Title is empty or shorter than 10 characters</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><strong>Junk / placeholder text</strong></td>
+                    <td>title and resolution text</td>
+                    <td>Same junk phrase list as incidents above</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><strong>Duplicate article</strong></td>
+                    <td>title vs. existing KB articles in the DB</td>
+                    <td>An article with the same title already exists (prevents re-importing on every sync)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warn-box">
+            <i class="bi bi-lightbulb text-warning me-2"></i>
+            <strong>Tip for Admins:</strong> After a sync, check the <em>Last Incident Sync</em> message in Admin â†’ Index Status.
+            It shows a breakdown like <em>"skipped 120: 80 missing required field, 30 junk/placeholder text, 10 duplicate resolution"</em>
+            so you can identify and fix data quality issues in ServiceNow before the next sync.
+        </div>
+    </div>
+
+    <!-- Page-by-page FAQ â€” using native <details>/<summary>, no Bootstrap JS needed -->
+    <div class="faq-section">
+        <h2><i class="bi bi-bar-chart-line"></i> Log Analyzer</h2>
+
+        <details class="faq-item">
+            <summary>What file types can I upload?</summary>
+            <div class="faq-body">
+                Supported: <code>.log</code> <code>.txt</code> <code>.out</code> <code>.csv</code> <code>.gz</code>.
+                You can upload multiple files at once. Files are read in memory â€” nothing is saved to disk.
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>What does "Load Sample" do?</summary>
+            <div class="faq-body">
+                It loads the built-in sample log file plus sample incidents and KB articles from the <code>data/</code> folder.
+                Good for testing the platform before connecting to real ServiceNow data.
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Does uploading a new log replace the old one?</summary>
+            <div class="faq-body">
+                Yes. Every upload completely replaces the previous analysis. The parsed_logs and error_signatures tables are cleared first, then filled with the new results.
+            </div>
+        </details>
+    </div>
+
+    <div class="faq-section">
+        <h2><i class="bi bi-lightbulb"></i> Recommendations</h2>
+
+        <details class="faq-item">
+            <summary>How do I get a recommendation?</summary>
+            <div class="faq-body">
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex gap-2"><span class="step-badge">1</span> Enter an incident number (e.g. INC0001234) <strong>or</strong> paste an error message.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">2</span> Click <strong>Get Recommendations</strong>.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">3</span> Review the results â€” each card shows the resolution, confidence score, and source.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">4</span> Click <strong>Helpful</strong> or <strong>Not Helpful</strong> to improve future results.</div>
+                </div>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>What if I enter an open or in-progress incident number?</summary>
+            <div class="faq-body">
+                The platform fetches the incident details live from ServiceNow, uses the description to search the local knowledge base, and shows you recommendations â€” even though the incident is not resolved yet. An amber banner will appear showing the live incident's state and details.
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>What does the confidence score mean?</summary>
+            <div class="faq-body">
+                It is a score from 0â€“99 combining text similarity, how many times the resolution has been used successfully, and overall user feedback. Higher = more likely to be relevant.
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Why are there no results?</summary>
+            <div class="faq-body">
+                Either the knowledge base is empty (ask your Admin to sync or import data) or the error text is too different from anything stored. Try rephrasing â€” use the actual error code or exception class name for better results.
+            </div>
+        </details>
+    </div>
+
+    {% if session.get('role') == 'Admin' %}
+    <div class="faq-section">
+        <h2><i class="bi bi-shield-check"></i> Admin Panel</h2>
+
+        <details class="faq-item">
+            <summary>When should I click Sync Now vs Retrain?</summary>
+            <div class="faq-body">
+                <strong>Sync Now</strong> â€” pulls fresh data from ServiceNow and then retrains automatically. Use this when new incidents have been resolved in ServiceNow.<br><br>
+                <strong>Retrain</strong> â€” rebuilds the search index from data already in the local DB without calling ServiceNow. Use this after manually adding Knowledge entries or importing a CSV.
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>How do I bulk-import incidents from a CSV?</summary>
+            <div class="faq-body">
+                <div class="d-flex flex-column gap-2 mb-3">
+                    <div class="d-flex gap-2"><span class="step-badge">1</span> Click <strong>Download Template</strong> to get a CSV with all required columns and two example rows.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">2</span> Fill in your incidents â€” one per row.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">3</span> Choose the file and click <strong>Upload &amp; Import</strong>.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">4</span> The index is rebuilt automatically after import.</div>
+                </div>
+                <div class="tip-box">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Required columns: <code>incident_number</code>, <code>error_description</code>, <code>resolution</code>. All others are optional but recommended.
+                </div>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>How do I control what a user can see?</summary>
+            <div class="faq-body">
+                Go to <strong>Admin â†’ Manage Users</strong>. Each user has a role (Admin or Analyst) and a set of allowed modules. Tick the modules the user should be able to access. Admin users always have full access regardless of module settings.
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>What is the Knowledge Repository?</summary>
+            <div class="faq-body">
+                A manually maintained list of error patterns and their proven resolutions. These are searched alongside synced incidents. Use it to add fixes that are not in ServiceNow â€” e.g. known infrastructure quirks, config errors, or environment-specific issues. After adding entries, click <strong>Retrain</strong> in Admin to include them in searches.
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>How is the sync scheduled automatically?</summary>
+            <div class="faq-body">
+                The background scheduler runs every <code>SYNC_INTERVAL_HOURS</code> hours (default 24, set in <code>.env</code>). It pulls incidents and KB articles automatically. You can also trigger it manually anytime from Admin â†’ Sync Now.
+            </div>
+        </details>
+    </div>
+    {% endif %}
+
+    <div class="tip-box mt-2">
+        <i class="bi bi-lightbulb-fill text-success me-2"></i>
+        <strong>Still stuck?</strong> Contact your platform administrator or check the <code>logs/application.log</code> file for error details.
+    </div>
+
+</main>
+</body>
+</html>
+
+
