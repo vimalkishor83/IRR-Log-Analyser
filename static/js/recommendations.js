@@ -436,23 +436,3 @@ function showEmpty(msg) {
          </div>`;
 }
 
-async function postJson(url, body) {
-    const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-        let msg = await res.text();
-        try { msg = JSON.parse(msg).error || msg; } catch (_) {}
-        throw new Error(msg);
-    }
-    return res.json();
-}
-
-function escHtml(v) {
-    return String(v ?? "")
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}

@@ -174,10 +174,6 @@ function downloadIncidentTemplate() {
     URL.revokeObjectURL(url);
 }
 
-function escapeHtml(value) {
-    return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-}
-
 // ── UI helpers ────────────────────────────────────────────────────────────────
 
 function showStatus(message, type) {
@@ -199,18 +195,6 @@ function setLoading(loading, activeButtonId, originalLabel) {
     } else {
         btn.innerHTML = originalLabel;
     }
-}
-
-async function postJson(url, body = null) {
-    const options = { method: "POST" };
-    if (body) {
-        options.headers = { "Content-Type": "application/json" };
-        options.body    = JSON.stringify(body);
-    }
-    const response = await fetch(url, options);
-    const data     = await response.json();
-    if (!response.ok) throw new Error(data.error || "Request failed.");
-    return data;
 }
 
 async function getJson(url) {

@@ -355,17 +355,3 @@ function updateSelectedText() {
 function showMessage(text) { document.getElementById("messages").innerHTML = text; }
 function setText(id, value) { document.getElementById(id).textContent = value ?? ""; }
 
-async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-        let message = await response.text();
-        try { message = JSON.parse(message).error || message; } catch (_) {}
-        showMessage(message);
-        throw new Error(message);
-    }
-    return response.json();
-}
-
-function escapeHtml(value) {
-    return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-}

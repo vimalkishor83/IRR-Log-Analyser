@@ -320,16 +320,3 @@ async function deleteEntry(id) {
     }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-    if (!response.ok) throw new Error(await response.text());
-    return response.json();
-}
-
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-}

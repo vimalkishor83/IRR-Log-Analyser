@@ -211,15 +211,3 @@ function showStatus(message, type) {
     if (type === "success") setTimeout(() => bar.classList.add("d-none"), 4000);
 }
 
-async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-    const data     = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "Request failed.");
-    return data;
-}
-
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-}
