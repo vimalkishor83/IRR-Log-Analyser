@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'Edit User' if user else 'Add User' }}</title>
+    <link href="common-static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="common-static/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="static/css/styles.css" rel="stylesheet">
+</head>
+<body>
+{% include 'nav.html' %}
+<main class="container p-4" style="max-width:560px;">
+
+    <h1 class="fw-bold mb-4" style="color:#2563eb;">
+        <i class="bi bi-person-{{ 'gear' if user else 'plus' }} me-2"></i>
+        {{ 'Edit User — ' ~ user.username if user else 'Add User' }}
+    </h1>
+
+    <div class="panel p-4">
+        <form method="post" action="{{ url_for('admin.update_user', user_id=user.id) if user else url_for('admin.create_user') }}">
+
+            <div class="mb-3">
+                <label class="form-label">Username {% if not user %}<span class="text-danger">*</span>{% endif %}</label>
+                <input name="username" class="form-control" placeholder="e.g. john.doe"
+                       {% if user %}value="{{ user.username }}" disabled{% endif %}>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password {% if not user %}<span class="text-danger">*</span>{% endif %}</label>
+                <input name="password" class="form-control" type="password" placeholder="Enter password">
+                {% if user %}<div class="form-text">Leave blank to keep the current password.</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Role <span class="text-danger">*</span></label>
+                <select name="role" class="form-select">
+                    <option value="Analyst" {% if role == 'Analyst' %}selected{% endif %}>Analyst</option>
+                    <option value="Admin" {% if role == 'Admin' %}selected{% endif %}>Admin</option>
+                </select>
+                <div class="form-text">Change role and click "Refresh module list" below if you switch to/from Admin.</div>
+            </div>
+
+            <div class="mb-1">
+                <label class="form-label">Module Access</label>
+                <div class="border rounded p-3" style="{% if role == 'Admin' %}opacity:.5{% endif %}">
+                    {% for mod in modules %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="modules"
+                               id="mod_{{ mod.key }}" value="{{ mod.key }}"
+                               {% if mod.key in selected_modules %}checked{% endif %}
+                               {% if role == 'Admin' %}disabled{% endif %}>
+                        <label class="form-check-label" for="mod_{{ mod.key }}">{{ mod.label }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if role == 'Admin' %}
+                <div class="form-text text-success">
+                    <i class="bi bi-shield-check me-1"></i>
+                    Admin users have full access to all modules automatically.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-2 mb-4">
+                <button type="submit" formnovalidate
+                        formaction="{{ url_for('admin.edit_user_form', user_id=user.id) if user else url_for('admin.add_user_form') }}"
+                        formmethod="get" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh module list for selected role
+                </button>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{{ url_for('admin.users_page') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i> Save</button>
+            </div>
+        </form>
+    </div>
+
+</main>
+</body>
+</html>

@@ -8,10 +8,10 @@ import csv
 import logging
 from pathlib import Path
 
-from flask import Blueprint, jsonify, render_template, request, session
+from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
 
-from core.auth import login_required, role_required
+from core.auth import ALL_MODULES, MODULE_LABELS, login_required, role_required
 from core.database import db
 from core.models import AuditLog, Incident, KBArticle, ServiceNowGroup, SyncHistory, User
 
@@ -33,70 +33,94 @@ def admin_page():
 @admin_bp.get("/admin/users")
 @role_required("Admin")
 def users_page():
-    return render_template("users.html")
+    users = User.query.all()
+    for u in users:
+        u.module_list = ALL_MODULES if u.role == "Admin" else \
+            [m.strip() for m in (u.modules or "").split(",") if m.strip()]
+    modules = [{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES]
+    return render_template("users.html", users=users, modules=modules,
+                            status=request.args.get("status"), error=request.args.get("error"))
 
 
-@admin_bp.get("/api/admin/modules")
+@admin_bp.get("/admin/users/add")
 @role_required("Admin")
-def list_modules():
-    """Return all available module keys and their display labels."""
-    from core.auth import ALL_MODULES, MODULE_LABELS
-    return jsonify([{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES])
+def add_user_form():
+    modules = [{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES]
+    role = request.args.get("role", "Analyst")
+    selected = ALL_MODULES if role == "Admin" else request.args.getlist("modules")
+    return render_template("user_form.html", user=None, modules=modules,
+                            selected_modules=selected, role=role)
+
+
+@admin_bp.get("/admin/users/<int:user_id>/edit")
+@role_required("Admin")
+def edit_user_form(user_id):
+    user = User.query.get_or_404(user_id)
+    modules = [{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES]
+    role = request.args.get("role", user.role)
+    if "role" in request.args:
+        selected = ALL_MODULES if role == "Admin" else request.args.getlist("modules")
+    else:
+        selected = ALL_MODULES if user.role == "Admin" else \
+            [m.strip() for m in (user.modules or "").split(",") if m.strip()]
+    return render_template("user_form.html", user=user, modules=modules,
+                            selected_modules=selected, role=role)
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────
 
-@admin_bp.get("/api/admin/users")
-@role_required("Admin")
-def list_users():
-    rows = User.query.all()
-    return jsonify([_user_dict(u) for u in rows])
-
-
-@admin_bp.post("/api/admin/users")
+@admin_bp.post("/admin/users/add")
 @role_required("Admin")
 def create_user():
-    data = request.get_json(silent=True) or {}
-    if User.query.filter_by(username=data.get("username")).first():
-        return jsonify({"error": "Username already exists"}), 400
+    username = (request.form.get("username") or "").strip()
+    password = request.form.get("password") or ""
+    role     = request.form.get("role", "Analyst")
+    modules  = request.form.getlist("modules")
+
+    if not username or not password:
+        return redirect(url_for("admin.users_page", error="Username and password are required."))
+    if User.query.filter_by(username=username).first():
+        return redirect(url_for("admin.users_page", error="Username already exists."))
+
     user = User(
-        username = data["username"],
-        password = generate_password_hash(data["password"]),
-        role     = data.get("role", "Analyst"),
-        modules  = _modules_str(data),
+        username = username,
+        password = generate_password_hash(password),
+        role     = role,
+        modules  = _modules_str(role, modules),
     )
     db.session.add(user)
     db.session.commit()
     _audit("create_user", user.username)
-    return jsonify(_user_dict(user)), 201
+    return redirect(url_for("admin.users_page", status=f"User '{username}' created successfully."))
 
 
-@admin_bp.put("/api/admin/users/<int:user_id>")
+@admin_bp.post("/admin/users/<int:user_id>/edit")
 @role_required("Admin")
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
-    data = request.get_json(silent=True) or {}
-    if "password" in data and data["password"]:
-        user.password = generate_password_hash(data["password"])
-    if "role" in data:
-        user.role = data["role"]
-    if "modules" in data or "allowed_modules" in data:
-        user.modules = _modules_str(data)
+    password = request.form.get("password") or ""
+    role     = request.form.get("role", user.role)
+    modules  = request.form.getlist("modules")
+
+    if password:
+        user.password = generate_password_hash(password)
+    user.role    = role
+    user.modules = _modules_str(role, modules)
     db.session.commit()
     _audit("update_user", user.username)
-    return jsonify(_user_dict(user))
+    return redirect(url_for("admin.users_page", status="User updated successfully."))
 
 
-@admin_bp.delete("/api/admin/users/<int:user_id>")
+@admin_bp.post("/admin/users/<int:user_id>/delete")
 @role_required("Admin")
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
     if user.username == "admin":
-        return jsonify({"error": "Cannot delete the built-in admin account"}), 400
+        return redirect(url_for("admin.users_page", error="Cannot delete the built-in admin account."))
     db.session.delete(user)
     db.session.commit()
     _audit("delete_user", user.username)
-    return jsonify({"message": "User deleted"})
+    return redirect(url_for("admin.users_page", status=f"User '{user.username}' deleted."))
 
 
 # ── Sync ──────────────────────────────────────────────────────────────────────
@@ -268,31 +292,12 @@ def stats():
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _user_dict(user):
-    return {
-        "id":              user.id,
-        "username":        user.username,
-        "role":            user.role,
-        "allowed_modules": user.modules or "",
-        "created_at":      user.created_at.isoformat(sep=" ") if getattr(user, "created_at", None) else "",
-    }
-
-
-def _modules_str(data):
-    """
-    Convert the modules value from the request into a comma-separated string.
-    Accepts either:
-      - a list  ["dashboard", "recommendations"]  (sent by users.js)
-      - a string "dashboard,recommendations"       (sent by older API callers)
-    Admin role always gets all modules.
-    """
-    from core.auth import ALL_MODULES, ADMIN_MODULES
-    if data.get("role") == "Admin":
+def _modules_str(role, selected_modules):
+    """Comma-separated module list for storage. Admin role always gets all modules."""
+    from core.auth import ADMIN_MODULES
+    if role == "Admin":
         return ADMIN_MODULES
-    raw = data.get("modules") or data.get("allowed_modules") or []
-    if isinstance(raw, list):
-        return ",".join(m for m in raw if m in ALL_MODULES)
-    return ",".join(m.strip() for m in str(raw).split(",") if m.strip() in ALL_MODULES)
+    return ",".join(m for m in selected_modules if m in ALL_MODULES)
 
 
 def _rebuild_index():
