@@ -54,7 +54,7 @@ async function doImport() {
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
 
-        const response = await fetch("/api/admin/import-csv", { method: "POST", body: formData });
+        const response = await fetch(apiUrl("/api/admin/import-csv"), { method: "POST", body: formData });
         const data     = await response.json();
 
         if (!response.ok) {
@@ -169,7 +169,7 @@ async function addSnowGroup() {
     const name  = (input.value || "").trim();
     if (!name) { showStatus("Please enter a group name.", "warning"); return; }
     try {
-        const resp = await fetch("/api/admin/snow-groups", {
+        const resp = await fetch(apiUrl("/api/admin/snow-groups"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name }),
@@ -186,7 +186,7 @@ async function addSnowGroup() {
 
 async function toggleSnowGroup(id, active) {
     try {
-        await fetch(`/api/admin/snow-groups/${id}`, {
+        await fetch(apiUrl(`/api/admin/snow-groups/${id}`), {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ active }),
@@ -200,7 +200,7 @@ async function toggleSnowGroup(id, active) {
 async function deleteSnowGroup(id) {
     if (!confirm("Delete this ServiceNow group?")) return;
     try {
-        await fetch(`/api/admin/snow-groups/${id}`, { method: "DELETE" });
+        await fetch(apiUrl(`/api/admin/snow-groups/${id}`), { method: "DELETE" });
         showStatus("Group deleted.", "success");
         loadSnowGroups();
     } catch {
@@ -275,7 +275,7 @@ function setLoading(loading, activeButtonId, originalLabel) {
 }
 
 async function getJson(url) {
-    const response = await fetch(url);
+    const response = await fetch(apiUrl(url));
     if (!response.ok) throw new Error("Request failed.");
     return response.json();
 }
