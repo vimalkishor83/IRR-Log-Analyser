@@ -1,12 +1,12 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IRR â€” Log Analyzer</title>
-  <link href="static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <title>IRR — Log Analyzer</title>
+  <link href="common-static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="common-static/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
   <link href="static/css/styles.css" rel="stylesheet">
 </head>
 
@@ -15,7 +15,7 @@
 
   <main class="irr-main">
 
-    <!-- â•â• Row 1: Upload + KPI cards â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- ══ Row 1: Upload + KPI cards ══════════════════════════════════════ -->
     <div class="row g-3 mb-3 align-items-stretch">
 
       <!-- Upload panel -->
@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <!-- KPI cards â€” 2Ã—4 grid -->
+      <!-- KPI cards — 2×4 grid -->
       <div class="col-xl-9 col-lg-8">
         <div class="kpi-grid-new">
           <div class="kpi-card kpi-blue">
@@ -89,14 +89,14 @@
             <div class="kpi-icon"><i class="bi bi-grid-1x2"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Top App</div>
-              <div class="kpi-value kpi-value-sm" id="topApplication">â€”</div>
+              <div class="kpi-value kpi-value-sm" id="topApplication">—</div>
             </div>
           </div>
           <div class="kpi-card kpi-slate">
             <div class="kpi-icon"><i class="bi bi-server"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Top Server</div>
-              <div class="kpi-value kpi-value-sm" id="topServer">â€”</div>
+              <div class="kpi-value kpi-value-sm" id="topServer">—</div>
             </div>
           </div>
           <div class="kpi-card kpi-green">
@@ -110,7 +110,7 @@
       </div>
     </div>
 
-    <!-- â•â• Row 2: Charts + Top Issues â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- ══ Row 2: Charts + Top Issues ═════════════════════════════════════ -->
     <div class="row g-3 mb-3">
 
       <!-- Severity donut -->
@@ -156,7 +156,7 @@
       </div>
     </div>
 
-    <!-- â•â• Row 3: Log viewer â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!-- ══ Row 3: Log viewer ═══════════════════════════════════════════════ -->
     <div class="irr-card irr-card-accent-indigo">
       <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <div class="irr-card-title mb-0"><i class="bi bi-journals me-2" style="color:#6366f1"></i>Detailed Log Viewer
@@ -171,7 +171,7 @@
             <option>DEBUG</option>
             <option>FATAL</option>
           </select>
-          <input id="logSearch" class="form-control form-control-sm" placeholder="Searchâ€¦" style="width:180px">
+          <input id="logSearch" class="form-control form-control-sm" placeholder="Search…" style="width:180px">
     
           <button id="exportCsv" class="btn btn-outline-secondary btn-sm" title="Export current view to CSV">
             <i class="bi bi-download me-1"></i>Export CSV
@@ -207,7 +207,7 @@
 
   </main>
 
-  <script src="static/lib/chartjs/chart.umd.min.js"></script>
+  <script src="common-static/chartjs/chart.umd.min.js"></script>
   <script src="static/js/utils.js"></script>
   <script src="static/js/app.js"></script>
 </body>

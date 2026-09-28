@@ -28,9 +28,6 @@ class Config:
     DATA_DIR = BASE_DIR / "data"
     LOG_DIR  = BASE_DIR / "logs"
 
-    SAMPLE_INCIDENTS_CSV = DATA_DIR / "sample_incidents.csv"
-    SAMPLE_KB_CSV        = DATA_DIR / "sample_kb_articles.csv"
-
     # Log rotation (read by logger_config.py)
     # LOG_MAX_BYTES    — max file size before rotation, default 5 MB
     # LOG_BACKUP_COUNT — number of rotated files to keep, default 10

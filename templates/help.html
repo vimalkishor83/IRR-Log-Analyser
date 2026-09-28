@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Help &amp; FAQ â€” IRR Platform</title>
-    <link href="static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <title>Help &amp; FAQ — IRR Platform</title>
+    <link href="common-static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="common-static/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
     <link href="static/css/styles.css" rel="stylesheet">
     <style>
         .help-hero {
@@ -114,7 +114,7 @@
     <!-- Hero -->
     <div class="help-hero">
         <h1><i class="bi bi-question-circle me-2"></i>Help &amp; FAQ</h1>
-        <p>Everything you need to know about using the IRR Platform â€” for both admins and end users.</p>
+        <p>Everything you need to know about using the IRR Platform — for both admins and end users.</p>
     </div>
 
     <!-- Role guide -->
@@ -124,7 +124,7 @@
         </h2>
         <div class="role-card role-admin">
             <div class="fw-bold mb-1"><i class="bi bi-shield-fill-check text-primary me-2"></i>Admin</div>
-            <div class="text-secondary small">Full access â€” can sync data from ServiceNow, retrain the model, import CSV, manage users, and maintain the Knowledge Repository. Admins can see all pages regardless of module settings.</div>
+            <div class="text-secondary small">Full access — can sync data from ServiceNow, retrain the model, import CSV, manage users, and maintain the Knowledge Repository. Admins can see all pages regardless of module settings.</div>
         </div>
         <div class="role-card role-analyst">
             <div class="fw-bold mb-1"><i class="bi bi-person-badge text-success me-2"></i>Analyst</div>
@@ -143,7 +143,7 @@
         </h2>
         <p class="text-secondary small mb-3">
             The platform only pulls <strong>Resolved</strong> and <strong>Closed</strong> incidents.
-            Open and In-Progress incidents are never stored â€” they are looked up live when you search by incident number.
+            Open and In-Progress incidents are never stored — they are looked up live when you search by incident number.
         </p>
         <table class="table table-bordered data-table">
             <thead>
@@ -162,7 +162,7 @@
                 <tr><td>category</td><td>application</td><td>Filtering &amp; display</td></tr>
                 <tr><td>subcategory</td><td>server</td><td>Display</td></tr>
                 <tr><td>assignment_group</td><td>assignment_group</td><td>Group filter &amp; display</td></tr>
-                <tr><td>state</td><td>status</td><td>Validation â€” must be Resolved/Closed</td></tr>
+                <tr><td>state</td><td>status</td><td>Validation — must be Resolved/Closed</td></tr>
             </tbody>
         </table>
     </div>
@@ -174,7 +174,7 @@
         </h2>
         <p class="text-secondary small mb-3">
             Every record fetched from ServiceNow is checked against the rules below <strong>before</strong> it is saved.
-            Records that fail any rule are counted as "skipped" â€” the sync summary in Admin shows how many failed and which rules fired most.
+            Records that fail any rule are counted as "skipped" — the sync summary in Admin shows how many failed and which rules fired most.
         </p>
 
         <h6 class="fw-bold mb-2 mt-3" style="color:#1e3a8a;"><i class="bi bi-file-earmark-text me-1"></i> Incident Validation (6 rules)</h6>
@@ -184,7 +184,7 @@
                     <th>#</th>
                     <th>Rule</th>
                     <th>What is checked</th>
-                    <th>Skipped ifâ€¦</th>
+                    <th>Skipped if…</th>
                 </tr>
             </thead>
             <tbody>
@@ -234,7 +234,7 @@
                     <th>#</th>
                     <th>Rule</th>
                     <th>What is checked</th>
-                    <th>Skipped ifâ€¦</th>
+                    <th>Skipped if…</th>
                 </tr>
             </thead>
             <tbody>
@@ -267,7 +267,7 @@
         </div>
     </div>
 
-    <!-- Page-by-page FAQ â€” using native <details>/<summary>, no Bootstrap JS needed -->
+    <!-- Page-by-page FAQ — using native <details>/<summary>, no Bootstrap JS needed -->
     <div class="faq-section">
         <h2><i class="bi bi-bar-chart-line"></i> Log Analyzer</h2>
 
@@ -275,7 +275,7 @@
             <summary>What file types can I upload?</summary>
             <div class="faq-body">
                 Supported: <code>.log</code> <code>.txt</code> <code>.out</code> <code>.csv</code> <code>.gz</code>.
-                You can upload multiple files at once. Files are read in memory â€” nothing is saved to disk.
+                You can upload multiple files at once. Files are read in memory — nothing is saved to disk.
             </div>
         </details>
 
@@ -296,7 +296,7 @@
                 <div class="d-flex flex-column gap-2">
                     <div class="d-flex gap-2"><span class="step-badge">1</span> Enter an incident number (e.g. INC0001234) <strong>or</strong> paste an error message.</div>
                     <div class="d-flex gap-2"><span class="step-badge">2</span> Click <strong>Get Recommendations</strong>.</div>
-                    <div class="d-flex gap-2"><span class="step-badge">3</span> Review the results â€” each card shows the resolution, confidence score, and source.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">3</span> Review the results — each card shows the resolution, confidence score, and source.</div>
                     <div class="d-flex gap-2"><span class="step-badge">4</span> Click <strong>Helpful</strong> or <strong>Not Helpful</strong> to improve future results.</div>
                 </div>
             </div>
@@ -305,21 +305,21 @@
         <details class="faq-item">
             <summary>What if I enter an open or in-progress incident number?</summary>
             <div class="faq-body">
-                The platform fetches the incident details live from ServiceNow, uses the description to search the local knowledge base, and shows you recommendations â€” even though the incident is not resolved yet. An amber banner will appear showing the live incident's state and details.
+                The platform fetches the incident details live from ServiceNow, uses the description to search the local knowledge base, and shows you recommendations — even though the incident is not resolved yet. An amber banner will appear showing the live incident's state and details.
             </div>
         </details>
 
         <details class="faq-item">
             <summary>What does the confidence score mean?</summary>
             <div class="faq-body">
-                It is a score from 0â€“99 combining text similarity, how many times the resolution has been used successfully, and overall user feedback. Higher = more likely to be relevant.
+                It is a score from 0–99 combining text similarity, how many times the resolution has been used successfully, and overall user feedback. Higher = more likely to be relevant.
             </div>
         </details>
 
         <details class="faq-item">
             <summary>Why are there no results?</summary>
             <div class="faq-body">
-                Either the knowledge base is empty (ask your Admin to sync or import data) or the error text is too different from anything stored. Try rephrasing â€” use the actual error code or exception class name for better results.
+                Either the knowledge base is empty (ask your Admin to sync or import data) or the error text is too different from anything stored. Try rephrasing — use the actual error code or exception class name for better results.
             </div>
         </details>
     </div>
@@ -331,8 +331,8 @@
         <details class="faq-item">
             <summary>When should I click Sync Now vs Retrain?</summary>
             <div class="faq-body">
-                <strong>Sync Now</strong> â€” pulls fresh data from ServiceNow and then retrains automatically. Use this when new incidents have been resolved in ServiceNow.<br><br>
-                <strong>Retrain</strong> â€” rebuilds the search index from data already in the local DB without calling ServiceNow. Use this after manually adding Knowledge entries or importing a CSV.
+                <strong>Sync Now</strong> — pulls fresh data from ServiceNow and then retrains automatically. Use this when new incidents have been resolved in ServiceNow.<br><br>
+                <strong>Retrain</strong> — rebuilds the search index from data already in the local DB without calling ServiceNow. Use this after manually adding Knowledge entries or importing a CSV.
             </div>
         </details>
 
@@ -341,7 +341,7 @@
             <div class="faq-body">
                 <div class="d-flex flex-column gap-2 mb-3">
                     <div class="d-flex gap-2"><span class="step-badge">1</span> Click <strong>Download Template</strong> to get a CSV with all required columns and two example rows.</div>
-                    <div class="d-flex gap-2"><span class="step-badge">2</span> Fill in your incidents â€” one per row.</div>
+                    <div class="d-flex gap-2"><span class="step-badge">2</span> Fill in your incidents — one per row.</div>
                     <div class="d-flex gap-2"><span class="step-badge">3</span> Choose the file and click <strong>Upload &amp; Import</strong>.</div>
                     <div class="d-flex gap-2"><span class="step-badge">4</span> The index is rebuilt automatically after import.</div>
                 </div>
@@ -362,7 +362,7 @@
         <details class="faq-item">
             <summary>What is the Knowledge Repository?</summary>
             <div class="faq-body">
-                A manually maintained list of error patterns and their proven resolutions. These are searched alongside synced incidents. Use it to add fixes that are not in ServiceNow â€” e.g. known infrastructure quirks, config errors, or environment-specific issues. After adding entries, click <strong>Retrain</strong> in Admin to include them in searches.
+                A manually maintained list of error patterns and their proven resolutions. These are searched alongside synced incidents. Use it to add fixes that are not in ServiceNow — e.g. known infrastructure quirks, config errors, or environment-specific issues. After adding entries, click <strong>Retrain</strong> in Admin to include them in searches.
             </div>
         </details>
 

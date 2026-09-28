@@ -27,7 +27,8 @@ log = logging.getLogger(__name__)
 
 def create_app():
     """Build and configure the Flask application."""
-    from flask import Flask
+    import os
+    from flask import Flask, send_from_directory
 
     app = Flask(__name__)
 
@@ -46,6 +47,16 @@ def create_app():
 
     # Register all route blueprints
     _register_blueprints(app)
+
+    # Shared, pre-built library files (Bootstrap, Chart.js), bind-mounted
+    # read-only at /common-static from the host's
+    # /home/claudedev/office/common-static -- one copy shared across office
+    # apps instead of each app vendoring its own.
+    common_static_dir = os.environ.get("COMMON_STATIC_DIR", "/common-static")
+
+    @app.route("/common-static/<path:filename>")
+    def common_static(filename):
+        return send_from_directory(common_static_dir, filename)
 
     # Create default admin account on very first startup
     with app.app_context():
