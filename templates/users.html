@@ -1,0 +1,144 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>User Management</title>
+    <link href="static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="static/css/styles.css" rel="stylesheet">
+    <style>
+      /* â”€â”€ Native <dialog> styled to match Bootstrap modal look â”€â”€ */
+      #userDialog {
+        border: none;
+        border-radius: 12px;
+        padding: 0;
+        width: min(500px, 95vw);
+        box-shadow: 0 8px 40px rgba(0,0,0,.25);
+      }
+      #userDialog::backdrop {
+        background: rgba(0,0,0,.5);
+      }
+      .dlg-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .dlg-header h5 { margin: 0; font-size: 1rem; font-weight: 600; }
+      .dlg-body   { padding: 1.25rem; }
+      .dlg-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: .5rem;
+        padding: .85rem 1.25rem;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 0 0 12px 12px;
+      }
+      .dlg-close {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        cursor: pointer;
+        color: #6b7280;
+        line-height: 1;
+        padding: .1rem .3rem;
+        border-radius: 4px;
+      }
+      .dlg-close:hover { background: #f1f5f9; color: #111; }
+    </style>
+</head>
+<body>
+{% include 'nav.html' %}
+<main class="container p-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold mb-0" style="color:#2563eb;">
+            <i class="bi bi-people-fill me-2"></i>User Management
+        </h1>
+        <button class="btn btn-primary" onclick="openAddModal()">
+            <i class="bi bi-person-plus me-1"></i> Add User
+        </button>
+    </div>
+
+    <!-- Status message -->
+    <div id="statusBar" class="alert d-none mb-3" role="alert"></div>
+
+    <!-- Users table -->
+    <div class="panel">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Accessible Modules</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="4" class="text-secondary text-center py-4">Loadingâ€¦</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<!-- Add / Edit User Dialog (native <dialog>, no Bootstrap JS needed) -->
+<dialog id="userDialog">
+    <div class="dlg-header">
+        <h5 id="modalTitle">Add User</h5>
+        <button class="dlg-close" onclick="closeModal()" title="Close">&times;</button>
+    </div>
+    <div class="dlg-body">
+
+        <input type="hidden" id="editUserId">
+
+        <div class="mb-3">
+            <label class="form-label">Username <span class="text-danger">*</span></label>
+            <input id="inputUsername" class="form-control" placeholder="e.g. john.doe">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" id="passwordLabel">Password <span class="text-danger">*</span></label>
+            <input id="inputPassword" class="form-control" type="password" placeholder="Enter password">
+            <div id="passwordHint" class="form-text d-none">Leave blank to keep the current password.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Role <span class="text-danger">*</span></label>
+            <select id="inputRole" class="form-select" onchange="onRoleChange()">
+                <option value="Analyst">Analyst</option>
+                <option value="Admin">Admin</option>
+            </select>
+        </div>
+
+        <div class="mb-1">
+            <label class="form-label">Module Access</label>
+            <div id="moduleCheckboxes" class="border rounded p-3">
+                <!-- Filled by JS -->
+            </div>
+            <div id="adminModuleNote" class="form-text text-success d-none">
+                <i class="bi bi-shield-check me-1"></i>
+                Admin users have full access to all modules automatically.
+            </div>
+        </div>
+
+    </div>
+    <div class="dlg-footer">
+        <button type="button" class="btn btn-outline-secondary" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveUser()">
+            <i class="bi bi-check2 me-1"></i> Save
+        </button>
+    </div>
+</dialog>
+
+<script src="static/js/utils.js"></script>
+<script src="static/js/users.js"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,5 @@
+﻿title,error_pattern,root_cause,resolution,assignment_group,active
+Oracle Listener Down,ORA-12541,Listener Down,Restart Oracle listener and check listener.ora,DBA Team,1
+Server Connection Refused,Connection refused,Server Down,Restart target server or service and validate network route,Network Team,1
+JVM Memory Exhausted,OutOfMemoryError,JVM Memory Exhausted,Increase JVM heap and review memory leak suspects,Middleware Team,1
+Disk Full,Disk space exceeded,Filesystem Full,Clean old files and extend disk volume,Unix Team,1

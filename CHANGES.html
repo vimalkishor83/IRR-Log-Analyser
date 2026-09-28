@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; margin: 2cm; color: #1a1a1a; }
+  h1   { font-size: 18pt; color: #1e3a8a; border-bottom: 3px solid #1e3a8a; padding-bottom: 6px; }
+  h2   { font-size: 13pt; color: #1e3a8a; background: #eff6ff; padding: 6px 10px;
+         border-left: 4px solid #2563eb; margin-top: 24px; }
+  h3   { font-size: 11pt; color: #374151; margin-top: 14px; margin-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 18px 0; font-size: 10pt; }
+  th   { background: #1e3a8a; color: #fff; padding: 7px 10px; text-align: left; }
+  td   { padding: 6px 10px; border: 1px solid #cbd5e1; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  code { background: #f1f5f9; padding: 1px 5px; border-radius: 3px;
+         font-family: Consolas, monospace; font-size: 9.5pt; color: #dc2626; }
+  .added   { color: #15803d; font-weight: bold; }
+  .removed { color: #dc2626; font-weight: bold; }
+  .changed { color: #d97706; font-weight: bold; }
+  .summary-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;
+                 padding: 12px 16px; margin-bottom: 24px; }
+  .file-tag { display: inline-block; background: #1e3a8a; color: #fff;
+              padding: 2px 8px; border-radius: 4px; font-size: 9pt;
+              font-family: Consolas, monospace; margin-bottom: 4px; }
+  p { margin: 4px 0 8px 0; }
+</style>
+</head>
+<body>
+
+<h1>IRR + Log Analyser — Code Change Log</h1>
+
+<div class="summary-box">
+  <strong>Project Path:</strong> D:\Claude\IRR + Log Analyser - New<br>
+  <strong>Date:</strong> 2026-06-29<br>
+  <strong>Total Files Changed:</strong> 9 files<br>
+  <strong>Change Categories:</strong> UI cleanup, chart improvements, Admin features, CSS layout fixes, Help page updates
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>1. dashboard.html &nbsp;<span style="font-weight:normal;font-size:10pt">templates/dashboard.html</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>1.1</td>
+    <td>~36</td>
+    <td><span class="removed">Removed</span></td>
+    <td>Deleted the <code>Load Sample</code> button HTML element.<br>
+        <em>Reason: Feature removed per feedback — button no longer required.</em></td>
+  </tr>
+  <tr>
+    <td>1.2</td>
+    <td>~100–122</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Severity Distribution, App Errors, and Top Issues column widths changed from
+        <code>col-md-3</code> to <code>col-md-4</code> each.<br>
+        <em>Reason: Errors Over Time chart removed, so 3 remaining panels share 12 columns equally.</em></td>
+  </tr>
+  <tr>
+    <td>1.3</td>
+    <td>~115–121</td>
+    <td><span class="removed">Disabled</span></td>
+    <td>Errors Over Time chart block wrapped in HTML comment <code>&lt;!-- ... --&gt;</code>.<br>
+        <em>Reason: Disabled per feedback — chart not needed for now; code kept for future re-enable.</em></td>
+  </tr>
+  <tr>
+    <td>1.4</td>
+    <td>~136, ~145</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Added <code>d-flex flex-column</code> classes to Severity Distribution and App Errors card divs.<br>
+        <em>Reason: Allows chart-wrap to grow via flex and fill blank space at bottom of card.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>2. app.js &nbsp;<span style="font-weight:normal;font-size:10pt">static/js/app.js</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>2.1</td>
+    <td>~9</td>
+    <td><span class="removed">Removed</span></td>
+    <td>Removed event listener: <code>document.getElementById("loadSample").addEventListener("click", loadSampleData)</code><br>
+        <em>Reason: Load Sample button deleted from HTML.</em></td>
+  </tr>
+  <tr>
+    <td>2.2</td>
+    <td>~58–67</td>
+    <td><span class="removed">Removed</span></td>
+    <td>Deleted entire <code>loadSampleData()</code> async function (10 lines).<br>
+        <em>Reason: No longer called — Load Sample button removed.</em></td>
+  </tr>
+  <tr>
+    <td>2.3</td>
+    <td>~71–82</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Updated <code>setAnalysisLoading()</code> — removed the two lines referencing
+        <code>document.getElementById("loadSample")</code> and <code>lbl.disabled</code>.<br>
+        <em>Reason: Element no longer exists in DOM.</em></td>
+  </tr>
+  <tr>
+    <td>2.4</td>
+    <td>~94–111</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Updated <code>loadDashboard()</code>: removed <code>fetchJson("/api/logs/timeline")</code>
+        parallel call and the <code>if (timeline) renderTimelineChart(timeline)</code> line.<br>
+        <em>Reason: Timeline chart disabled; canvas element no longer in DOM — calling it would throw a null error.</em></td>
+  </tr>
+  <tr>
+    <td>2.5</td>
+    <td>~115–168</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Rewrote <code>loadTopIssues()</code> to call new endpoint <code>/api/logs/top-issues</code>
+        (single request replacing two parallel fetches). Each issue row now shows a per-issue
+        probable root cause line in amber below the occurrence count.<br>
+        <em>Reason: Per-issue root cause requested; new backend endpoint handles grouping server-side.</em></td>
+  </tr>
+  <tr>
+    <td>2.6</td>
+    <td>~276–332 (old)</td>
+    <td><span class="removed">Removed</span></td>
+    <td>Deleted entire <code>renderTimelineChart()</code> function (55 lines).<br>
+        <em>Reason: Timeline chart disabled — function is dead code.</em></td>
+  </tr>
+  <tr>
+    <td>2.7</td>
+    <td>~216–255</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Updated <code>renderChart()</code>:
+        <ul style="margin:4px 0">
+          <li>Bar chart labels: strip folder path prefix (<code>split(/[/\\]/).pop()</code>), truncate to 16 chars with <code>…</code></li>
+          <li>Bar chart legend: set <code>display: false</code> — removes "undefined" legend entry</li>
+          <li>X-axis ticks: fixed rotation <code>maxRotation/minRotation: 35</code> so labels don't overlap</li>
+        </ul>
+        <em>Reason: App names were full file paths causing unreadable chart labels; legend showed "undefined".</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>3. dashboard_routes.py &nbsp;<span style="font-weight:normal;font-size:10pt">routes/dashboard_routes.py</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>3.1</td>
+    <td>~72</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Changed <code>app_rows</code> to <code>app_rows[:5]</code> when building the applications dict.<br>
+        <em>Reason: Limit App Errors chart to Top 5 apps — too many bars made chart unreadable.</em></td>
+  </tr>
+  <tr>
+    <td>3.2</td>
+    <td>~149–195 (new)</td>
+    <td><span class="added">Added</span></td>
+    <td>New API endpoint <code>GET /api/logs/top-issues</code> — groups ERROR/CRITICAL logs by signature,
+        runs <code>LogAnalyzer._root_cause()</code> per issue group, returns top 5 with individual
+        <code>root_cause</code> field per issue.<br>
+        <em>Reason: Support per-issue probable root cause in the Top Issues panel.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>4. models.py &nbsp;<span style="font-weight:normal;font-size:10pt">core/models.py</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>4.1</td>
+    <td>~175–183 (new)</td>
+    <td><span class="added">Added</span></td>
+    <td>New database model <code>ServiceNowGroup</code> with fields:
+        <code>id</code>, <code>name</code> (unique), <code>active</code> (bool), <code>created_at</code> (datetime).<br>
+        Creates table <code>servicenow_groups</code>.<br>
+        <em>Reason: Store ServiceNow assignment groups in DB so they can be managed via Admin UI instead of .env file.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>5. admin_routes.py &nbsp;<span style="font-weight:normal;font-size:10pt">routes/admin_routes.py</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>5.1</td>
+    <td>~16</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Added <code>ServiceNowGroup</code> to the models import line.<br>
+        <em>Reason: Required for new group API routes.</em></td>
+  </tr>
+  <tr>
+    <td>5.2</td>
+    <td>~195–235 (new)</td>
+    <td><span class="added">Added</span></td>
+    <td>Four new API routes for ServiceNow group management:
+        <ul style="margin:4px 0">
+          <li><code>GET  /api/admin/snow-groups</code> — list all groups</li>
+          <li><code>POST /api/admin/snow-groups</code> — create new group</li>
+          <li><code>PUT  /api/admin/snow-groups/&lt;id&gt;</code> — update name or active flag</li>
+          <li><code>DELETE /api/admin/snow-groups/&lt;id&gt;</code> — delete a group</li>
+        </ul>
+        All routes are Admin-only and write to the audit log.<br>
+        <em>Reason: Allow admins to manage ServiceNow assignment groups from the UI.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>6. admin.html &nbsp;<span style="font-weight:normal;font-size:10pt">templates/admin.html</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>6.1</td>
+    <td>~100–120 (new)</td>
+    <td><span class="added">Added</span></td>
+    <td>New <em>ServiceNow Assignment Groups</em> panel above Index Status, containing:
+        <ul style="margin:4px 0">
+          <li>Description text explaining purpose of the groups</li>
+          <li>Text input + <em>Add Group</em> button</li>
+          <li><code>&lt;div id="snowGroupsList"&gt;</code> container rendered dynamically by JS</li>
+        </ul>
+        <em>Reason: Provide UI to add/view/toggle/delete ServiceNow groups without editing config files.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>7. admin.js &nbsp;<span style="font-weight:normal;font-size:10pt">static/js/admin.js</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>7.1</td>
+    <td>~5</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Added <code>loadSnowGroups()</code> call inside <code>DOMContentLoaded</code> handler.<br>
+        <em>Reason: Load the groups list when the Admin page opens.</em></td>
+  </tr>
+  <tr>
+    <td>7.2</td>
+    <td>~138–205 (new)</td>
+    <td><span class="added">Added</span></td>
+    <td>Four new JavaScript functions:
+        <ul style="margin:4px 0">
+          <li><code>loadSnowGroups()</code> — fetches and renders the groups list with Active/Inactive badges and action buttons</li>
+          <li><code>addSnowGroup()</code> — POSTs a new group name, refreshes list</li>
+          <li><code>toggleSnowGroup(id, active)</code> — PUTs active flag toggle</li>
+          <li><code>deleteSnowGroup(id)</code> — DELETEs a group after confirmation</li>
+        </ul>
+        <em>Reason: Drive the new ServiceNow Groups panel in the Admin page.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>8. help.html &nbsp;<span style="font-weight:normal;font-size:10pt">templates/help.html</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>8.1</td>
+    <td>~283–288 (old)</td>
+    <td><span class="removed">Removed</span></td>
+    <td>Deleted FAQ item <em>"What does Load Sample do?"</em> (6 lines).<br>
+        <em>Reason: Load Sample button no longer exists in the application.</em></td>
+  </tr>
+  <tr>
+    <td>8.2</td>
+    <td>~224 (table row)</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Updated Assignment Group Filter row in the Data Validation table: changed reference from
+        <code>SERVICENOW_ASSIGNMENT_GROUPS in .env</code> to
+        <em>Admin → ServiceNow Assignment Groups UI</em>.<br>
+        <em>Reason: Groups are now managed in the Admin UI, not the .env file.</em></td>
+  </tr>
+  <tr>
+    <td>8.3</td>
+    <td>~378–390 (new)</td>
+    <td><span class="added">Added</span></td>
+    <td>New Admin FAQ item: <em>"How do I manage which ServiceNow groups are synced?"</em> —
+        explains how to add, activate/deactivate, and clear groups from the Admin panel.<br>
+        <em>Reason: Document the new ServiceNow Groups feature for admins.</em></td>
+  </tr>
+  <tr>
+    <td>8.4</td>
+    <td>~386</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Updated <em>"Still stuck?"</em> tip box: removed reference to
+        <code>logs/application.log</code> file.<br>
+        <em>Reason: Log files are only accessible to server deployment team, not admins or users.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>9. styles.css &nbsp;<span style="font-weight:normal;font-size:10pt">static/css/styles.css</span></h2>
+
+<table>
+  <tr><th style="width:12%">Change&nbsp;#</th><th style="width:18%">Line(s)</th><th style="width:20%">Type</th><th>What Changed &amp; Why</th></tr>
+  <tr>
+    <td>9.1</td>
+    <td>~2</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Expanded <code>body</code> rule: added <code>overflow-y: scroll</code>,
+        <code>scrollbar-gutter: stable</code>, <code>-webkit-font-smoothing: antialiased</code>,
+        <code>-moz-osx-font-smoothing: grayscale</code>.<br>
+        <em>Reason: Prevents layout shift between Windows (visible scrollbar) and Mac (hidden scrollbar);
+        consistent font rendering across displays.</em></td>
+  </tr>
+  <tr>
+    <td>9.2</td>
+    <td>~2 (new line)</td>
+    <td><span class="added">Added</span></td>
+    <td>Added universal box-sizing rule: <code>*, *::before, *::after { box-sizing: border-box; }</code><br>
+        <em>Reason: Padding and border no longer add to element width — consistent layout across all browsers.</em></td>
+  </tr>
+  <tr>
+    <td>9.3</td>
+    <td>~258–261 (old)</td>
+    <td><span class="removed">Removed</span></td>
+    <td>Deleted <code>#loadSample</code> and <code>#loadSample:hover</code> CSS rules (2 lines).<br>
+        <em>Reason: Load Sample button removed from HTML — rules are dead code.</em></td>
+  </tr>
+  <tr>
+    <td>9.4</td>
+    <td>~201</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Updated <code>.chart-wrap</code>: changed from <code>height: 220px</code> to
+        <code>flex: 1; min-height: 200px; max-height: 320px</code>.<br>
+        <em>Reason: Chart cards now fill available vertical space instead of leaving blank gap at bottom;
+        max-height prevents inconsistent sizing across machines.</em></td>
+  </tr>
+  <tr>
+    <td>9.5</td>
+    <td>~148–153</td>
+    <td><span class="changed">Changed</span></td>
+    <td>Updated <code>.kpi-grid-new</code>: added <code>grid-template-rows: repeat(2, 1fr)</code>.<br>
+        <em>Reason: Locks both KPI rows to equal height — prevents row height variation from font rendering differences between machines.</em></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Summary of All Changes</h2>
+
+<table>
+  <tr><th>#</th><th>File</th><th>Lines Added</th><th>Lines Removed / Changed</th><th>Category</th></tr>
+  <tr><td>1</td><td><code>templates/dashboard.html</code></td><td>+4</td><td>-1 button, ~6 changed</td><td>UI Cleanup + Layout</td></tr>
+  <tr><td>2</td><td><code>static/js/app.js</code></td><td>+35</td><td>-80 (3 functions removed/rewritten)</td><td>JS Logic</td></tr>
+  <tr><td>3</td><td><code>routes/dashboard_routes.py</code></td><td>+47</td><td>-1 (slice added)</td><td>Backend API</td></tr>
+  <tr><td>4</td><td><code>core/models.py</code></td><td>+9</td><td>0</td><td>Database Model</td></tr>
+  <tr><td>5</td><td><code>routes/admin_routes.py</code></td><td>+45</td><td>+1 import line</td><td>Backend API</td></tr>
+  <tr><td>6</td><td><code>templates/admin.html</code></td><td>+22</td><td>0</td><td>UI Feature</td></tr>
+  <tr><td>7</td><td><code>static/js/admin.js</code></td><td>+68</td><td>+1 function call</td><td>JS Logic</td></tr>
+  <tr><td>8</td><td><code>templates/help.html</code></td><td>+14</td><td>-6 removed, ~2 changed</td><td>Documentation</td></tr>
+  <tr><td>9</td><td><code>static/css/styles.css</code></td><td>+7</td><td>-2 removed, ~3 changed</td><td>CSS / Layout Fix</td></tr>
+</table>
+
+</body>
+</html>

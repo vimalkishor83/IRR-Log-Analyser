@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Knowledge Repository</title>
+    <link href="static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="static/css/styles.css" rel="stylesheet">
+    <style>
+      /* ── Add-form card ── */
+      .kb-add-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(37,99,235,.07);
+        overflow: hidden;
+      }
+      .kb-add-header {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: 1rem 1.4rem;
+        background: linear-gradient(135deg,#eff6ff,#f8fafc);
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .kb-add-header .kb-icon {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        background: #2563eb;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+      .kb-add-header .kb-icon i { color: #fff; font-size: 1.1rem; }
+      .kb-add-header h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b; }
+      .kb-add-header p  { margin: 0; font-size: .8rem; color: #64748b; }
+      .kb-add-body { padding: 1.25rem 1.4rem 1.4rem; }
+
+      /* field error state */
+      .kb-field-error { border-color: #dc3545 !important; }
+      .kb-err-msg { font-size: .78rem; color: #dc3545; margin-top: .25rem; display: none; }
+      .kb-err-msg.show { display: block; }
+
+      /* char counter */
+      .char-count { font-size: .72rem; color: #94a3b8; text-align: right; margin-top: 2px; }
+
+      /* submit button loading state */
+      #addKnowledge .spinner-border { display: none; }
+      #addKnowledge.loading .btn-label { display: none; }
+      #addKnowledge.loading .spinner-border { display: inline-block; }
+
+      /* toast */
+      #kbToast {
+        position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999;
+        min-width: 260px;
+        background: #fff; border: 1px solid #e2e8f0;
+        border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.12);
+        padding: .85rem 1.1rem;
+        display: flex; align-items: center; gap: .65rem;
+        transform: translateY(120%); opacity: 0;
+        transition: transform .3s ease, opacity .3s ease;
+      }
+      #kbToast.show { transform: translateY(0); opacity: 1; }
+      #kbToast .toast-icon { font-size: 1.2rem; }
+      #kbToast .toast-msg  { font-size: .88rem; font-weight: 500; color: #1e293b; }
+
+      /* repo section */
+      .kb-repo-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(37,99,235,.07);
+        padding: 1.25rem 1.4rem;
+        margin-top: 1.25rem;
+      }
+      .kb-count-badge {
+        font-size: .72rem; font-weight: 600; padding: .2rem .55rem;
+        border-radius: 20px; background: #eff6ff; color: #2563eb;
+        border: 1px solid #bfdbfe;
+      }
+
+      /* row card */
+      .kb-row {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: .9rem 1rem;
+        margin-bottom: .6rem;
+        background: #fff;
+        transition: box-shadow .15s;
+      }
+      .kb-row:hover { box-shadow: 0 2px 10px rgba(37,99,235,.08); }
+      .kb-row.inactive-row { background: #f8fafc; opacity: .8; }
+      .kb-pattern { font-weight: 700; font-size: .95rem; color: #1e293b; }
+      .kb-meaning { font-size: .82rem; color: #64748b; margin-top: 2px; }
+      .kb-resolution { font-size: .83rem; color: #334155; margin-top: 4px; }
+      .kb-resolution strong { color: #2563eb; }
+      .kb-group-tag {
+        font-size: .72rem; background: #f1f5f9; color: #64748b;
+        border-radius: 20px; padding: .1rem .5rem;
+        border: 1px solid #e2e8f0;
+      }
+
+      /* inline edit form */
+      .kb-edit-form {
+        margin-top: .85rem; padding: 1rem;
+        background: #f8fafc; border-radius: 8px;
+        border: 1px solid #e2e8f0;
+      }
+    </style>
+</head>
+<body>
+{% include 'nav.html' %}
+<main class="container p-4">
+
+  <!-- ── Add Knowledge card ── -->
+  <div class="kb-add-card">
+    <div class="kb-add-header">
+      <div class="kb-icon"><i class="bi bi-plus-lg"></i></div>
+      <div>
+        <h2>Add Knowledge Entry</h2>
+        <p>Add known error patterns and proven fixes. The recommender uses these when no exact incident match is found.</p>
+      </div>
+    </div>
+    <div class="kb-add-body">
+      <div class="row g-3">
+
+        <!-- Error Pattern -->
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label fw-semibold" style="font-size:.85rem">
+            <i class="bi bi-bug me-1 text-danger"></i>Error Pattern <span class="text-danger">*</span>
+          </label>
+          <input id="pattern" class="form-control form-control-sm"
+                 placeholder="e.g. ORA-12541, NullPointerException"
+                 maxlength="120" oninput="clearErr('pattern'); updateChar('pattern',120)">
+          <div class="char-count"><span id="pattern-chars">0</span>/120</div>
+          <div class="kb-err-msg" id="err-pattern">Error Pattern is required.</div>
+        </div>
+
+        <!-- Meaning / Root Cause -->
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label fw-semibold" style="font-size:.85rem">
+            <i class="bi bi-lightbulb me-1 text-warning"></i>Meaning / Root Cause <span class="text-danger">*</span>
+          </label>
+          <input id="meaning" class="form-control form-control-sm"
+                 placeholder="Brief description of what this error means"
+                 maxlength="200" oninput="clearErr('meaning'); updateChar('meaning',200)">
+          <div class="char-count"><span id="meaning-chars">0</span>/200</div>
+          <div class="kb-err-msg" id="err-meaning">Meaning / Root Cause is required.</div>
+        </div>
+
+        <!-- Resolution -->
+        <div class="col-md-8 col-lg-4">
+          <label class="form-label fw-semibold" style="font-size:.85rem">
+            <i class="bi bi-tools me-1 text-success"></i>Resolution <span class="text-danger">*</span>
+          </label>
+          <textarea id="resolution" class="form-control form-control-sm" rows="2"
+                    placeholder="Step-by-step fix or workaround…"
+                    maxlength="500" oninput="clearErr('resolution'); updateChar('resolution',500)"></textarea>
+          <div class="char-count"><span id="resolution-chars">0</span>/500</div>
+          <div class="kb-err-msg" id="err-resolution">Resolution is required.</div>
+        </div>
+
+        <!-- Assignment Group -->
+        <div class="col-md-4 col-lg-2">
+          <label class="form-label fw-semibold" style="font-size:.85rem">
+            <i class="bi bi-people me-1 text-secondary"></i>Group
+          </label>
+          <input id="assignmentGroup" class="form-control form-control-sm"
+                 placeholder="e.g. DBA Team" maxlength="80">
+          <div class="char-count">&nbsp;</div>
+          <div class="form-text" style="font-size:.72rem;margin-top:2px;">Optional</div>
+        </div>
+
+      </div>
+
+      <!-- Actions row -->
+      <div class="d-flex align-items-center gap-3 mt-3">
+        <button id="addKnowledge" class="btn btn-primary btn-sm px-4">
+          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+          <span class="btn-label"><i class="bi bi-plus-circle me-1"></i>Add Entry</span>
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetForm()">
+          <i class="bi bi-x-circle me-1"></i>Clear
+        </button>
+        <span class="text-danger" style="font-size:.75rem;">* Required fields</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Repository card ── -->
+  <div class="kb-repo-card">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h2 class="mb-0" style="font-size:1.1rem;font-weight:700;">
+          <i class="bi bi-database me-2 text-primary"></i>Repository
+        </h2>
+        <span class="kb-count-badge" id="repoCountBadge">0 entries</span>
+        <!-- Active / Inactive filter -->
+        <div class="btn-group btn-group-sm" role="group">
+          <button id="filterAll"      class="btn btn-outline-secondary active" onclick="setFilter('all')">All</button>
+          <button id="filterActive"   class="btn btn-outline-success"          onclick="setFilter('active')">Active</button>
+          <button id="filterInactive" class="btn btn-outline-secondary"        onclick="setFilter('inactive')">Inactive</button>
+        </div>
+        <!-- Text search -->
+        <div class="input-group input-group-sm" style="width:220px;">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input id="knowledgeSearch" type="text" class="form-control" placeholder="Search…" oninput="renderFiltered()">
+          <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()" title="Clear">&#x2715;</button>
+        </div>
+      </div>
+      <!-- Bulk actions -->
+      <div id="bulkToolbar" class="d-flex align-items-center gap-2" style="display:none;">
+        <span id="selectionCount" class="text-secondary small"></span>
+        <button class="btn btn-sm btn-outline-success"  onclick="bulkAction('activate')">Activate</button>
+        <button class="btn btn-sm btn-outline-warning"  onclick="bulkAction('deactivate')">Deactivate</button>
+        <button class="btn btn-sm btn-outline-danger"   onclick="bulkAction('delete')">Delete</button>
+      </div>
+    </div>
+    <div id="knowledgeRows"></div>
+  </div>
+
+</main>
+
+<!-- Toast notification -->
+<div id="kbToast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span class="toast-msg"  id="toastMsg"></span>
+</div>
+
+<script src="static/js/utils.js"></script>
+<script src="static/js/knowledge.js"></script>
+</body>
+</html>

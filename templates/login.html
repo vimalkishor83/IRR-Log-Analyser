@@ -1,0 +1,381 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IRR Platform â€” Sign In</title>
+  <link href="static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    /* â•â• LEFT PANEL â€” 60% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .left-panel {
+      flex: 0 0 60%;
+      background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 45%, #312e81 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(60px);
+      opacity: .35;
+    }
+    .blob-1 { width: 420px; height: 420px; background: #6366f1; top: -120px; right: -80px; }
+    .blob-2 { width: 320px; height: 320px; background: #3b82f6; bottom: -80px; left: -60px; }
+    .blob-3 { width: 200px; height: 200px; background: #e0734a; bottom: 30%; right: 10%; opacity: .18; }
+
+    /* Brand */
+    .brand { position: relative; z-index: 1; }
+    .brand-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.7rem; color: #fff;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 8px 28px rgba(59,130,246,.5);
+    }
+    .brand-name {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #f1f5f9;
+      letter-spacing: -.03em;
+      margin-bottom: .2rem;
+    }
+    .brand-name span { color: #60a5fa; }
+    .brand-tagline {
+      font-size: .85rem;
+      color: #64748b;
+      margin-bottom: 0;
+    }
+
+    /* Feature cards grid */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .feat-card {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      padding: 1.1rem 1.2rem;
+      backdrop-filter: blur(6px);
+      transition: background .2s;
+    }
+    .feat-card:hover { background: rgba(255,255,255,.12); }
+
+    .feat-card-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      margin-bottom: .65rem;
+    }
+    .ic-blue   { background: rgba(59,130,246,.25);  color: #60a5fa; }
+    .ic-indigo { background: rgba(99,102,241,.25);  color: #a5b4fc; }
+    .ic-green  { background: rgba(16,185,129,.25);  color: #6ee7b7; }
+    .ic-orange { background: rgba(249,115,22,.25);  color: #fb923c; }
+
+    .feat-card-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: .2rem;
+    }
+    .feat-card-desc {
+      font-size: .72rem;
+      color: #64748b;
+      line-height: 1.45;
+    }
+
+
+    .left-footer {
+      font-size: .68rem;
+      color: #334155;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* â•â• RIGHT PANEL â€” 40% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .right-panel {
+      flex: 0 0 40%;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 2rem;
+      position: relative;
+    }
+
+    /* Coloured accent strip on right edge of left panel */
+    .right-panel::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 15%; bottom: 15%;
+      width: 3px;
+      background: linear-gradient(to bottom, #3b82f6, #6366f1, #a855f7);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .form-wrap {
+      width: 100%;
+      max-width: 340px;
+    }
+
+    /* Form heading */
+    .form-heading {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: .2rem;
+    }
+    .form-sub {
+      font-size: .8rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+    }
+
+    /* Alert */
+    .alert-box {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 10px;
+      padding: .65rem .9rem;
+      font-size: .8rem;
+      color: #be123c;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Fields */
+    .field { margin-bottom: 1.15rem; }
+    .field label {
+      display: block;
+      font-size: .76rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: .38rem;
+    }
+    .field-wrap { position: relative; }
+    .field-icon {
+      position: absolute;
+      left: .9rem; top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8; font-size: .9rem;
+      pointer-events: none;
+    }
+    .field input {
+      width: 100%;
+      padding: .68rem .9rem .68rem 2.4rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: .88rem;
+      color: #0f172a;
+      background: #fff;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    }
+    .pw-toggle {
+      position: absolute;
+      right: .75rem; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: #94a3b8; cursor: pointer;
+      padding: .2rem; line-height: 1;
+      transition: color .15s;
+    }
+    .pw-toggle:hover { color: #374151; }
+
+    /* Submit */
+    .btn-signin {
+      width: 100%;
+      padding: .75rem;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: .92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      margin-top: 1.5rem;
+      box-shadow: 0 4px 16px rgba(37,99,235,.4);
+      transition: opacity .15s, transform .1s;
+      letter-spacing: .01em;
+    }
+    .btn-signin:hover  { opacity: .9; }
+    .btn-signin:active { transform: scale(.98); }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin: 1.5rem 0 .5rem;
+      font-size: .72rem;
+      color: #cbd5e1;
+    }
+    .divider::before, .divider::after {
+      content: ""; flex: 1;
+      height: 1px; background: #e2e8f0;
+    }
+
+    /* Role pills */
+    .role-pills {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .role-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .3rem .7rem;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      cursor: default;
+    }
+    .pill-admin  { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .pill-analyst{ background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .left-panel { flex: none; padding: 2rem; }
+      .feat-grid { grid-template-columns: 1fr 1fr; }
+      .stats-row { display: none; }
+      .right-panel { flex: none; min-height: 60vh; }
+      .right-panel::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- â•â• LEFT 60% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="left-panel">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-icon"><i class="bi bi-activity"></i></div>
+      <div class="brand-name"><span>IRR</span> Platform</div>
+      <div class="brand-tagline">Incident Resolution Recommender</div>
+    </div>
+
+    <!-- Feature cards -->
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-card-icon ic-blue"><i class="bi bi-bar-chart-line"></i></div>
+        <div class="feat-card-title">Log Analyzer</div>
+        <div class="feat-card-desc">Parse &amp; visualize application logs with severity breakdown</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-card-icon ic-indigo"><i class="bi bi-lightbulb"></i></div>
+        <div class="feat-card-title">AI Recommendations</div>
+        <div class="feat-card-desc">TF-IDF matching against past incidents &amp; KB articles</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-card-icon ic-green"><i class="bi bi-journal-richtext"></i></div>
+        <div class="feat-card-title">Knowledge Base</div>
+        <div class="feat-card-desc">Manage and activate resolution articles for the engine</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-card-icon ic-orange"><i class="bi bi-cloud-download"></i></div>
+        <div class="feat-card-title">ServiceNow Sync</div>
+        <div class="feat-card-desc">Auto-pull resolved incidents on a configurable schedule</div>
+      </div>
+    </div>
+
+    <div class="left-footer">&copy; 2026 IT Operations Platform &nbsp;Â·&nbsp; v1.0</div>
+  </div>
+
+  <!-- â•â• RIGHT 40% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="right-panel">
+    <div class="form-wrap">
+      <div class="form-heading">Welcome back</div>
+      <div class="form-sub">Sign in to access the IRR platform</div>
+
+      {% if error %}
+      <div class="alert-box">
+        <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post" autocomplete="on">
+        <div class="field">
+          <label for="username">Username</label>
+          <div class="field-wrap">
+            <i class="bi bi-person field-icon"></i>
+            <input id="username" name="username" type="text"
+                   placeholder="Enter username"
+                   value="admin" autocomplete="username" autofocus>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="field-wrap">
+            <i class="bi bi-lock field-icon"></i>
+            <input id="password" name="password" type="password"
+                   placeholder="Enter password"
+                   value="admin123" autocomplete="current-password">
+            <button type="button" class="pw-toggle" onclick="togglePw()">
+              <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-signin">
+          <i class="bi bi-box-arrow-in-right"></i> Sign In
+        </button>
+      </form>
+
+      <div class="divider">available roles</div>
+      <div class="role-pills">
+        <span class="role-pill pill-admin"><i class="bi bi-shield-check"></i> Admin</span>
+        <span class="role-pill pill-analyst"><i class="bi bi-person-badge"></i> Analyst</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+function togglePw() {
+  const pw = document.getElementById("password");
+  const ic = document.getElementById("eyeIcon");
+  if (pw.type === "password") { pw.type = "text";     ic.className = "bi bi-eye-slash"; }
+  else                        { pw.type = "password"; ic.className = "bi bi-eye"; }
+}
+</script>
+</body>
+</html>
+
+

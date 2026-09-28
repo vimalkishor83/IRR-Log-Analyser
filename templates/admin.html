@@ -1,0 +1,139 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Panel</title>
+    <link href="static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="static/css/styles.css" rel="stylesheet">
+</head>
+
+<body>
+    {% include 'nav.html' %}
+    <main class="container p-4">
+
+        <h1 class="mb-4 fw-bold" style="color:#2563eb;">
+            <i class="bi bi-gear-fill me-2"></i>Admin Panel
+        </h1>
+
+        <!-- Status message bar -->
+        <div id="statusBar" class="alert d-none mb-4" role="alert"></div>
+
+        <div class="row g-4">
+
+            <!-- Card 1: ServiceNow Sync -->
+            <div class="col-md-3">
+                <div class="panel h-100 d-flex flex-column">
+                    <h2 class="d-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-repeat text-success"></i>
+                        ServiceNow Sync
+                    </h2>
+                    <p class="text-secondary flex-grow-1">
+                        Trigger a manual sync of incidents and KB articles from ServiceNow,
+                        then rebuild the recommendation model.
+                    </p>
+                    <button id="btnSync" class="btn btn-success w-100" onclick="runAction('sync')">
+                        <i class="bi bi-cloud-download me-1"></i> Sync Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card 2: Retrain Model -->
+            <div class="col-md-3">
+                <div class="panel h-100 d-flex flex-column">
+                    <h2 class="d-flex align-items-center gap-2">
+                        <i class="bi bi-cpu text-primary"></i>
+                        Retrain Model
+                    </h2>
+                    <p class="text-secondary flex-grow-1">
+                        Rebuild the TF-IDF recommendation index from all current data
+                        without syncing ServiceNow.
+                    </p>
+                    <button id="btnRetrain" class="btn btn-primary w-100" onclick="runAction('retrain')">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Retrain
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card 3: Import CSV -->
+            <div class="col-md-3">
+                <div class="panel h-100 d-flex flex-column">
+                    <h2 class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-arrow-up text-warning"></i>
+                        Import CSV
+                    </h2>
+                    <p class="text-secondary flex-grow-1">
+                        Download the template, fill in your incidents, then upload.
+                        The index is rebuilt automatically after import.
+                    </p>
+                    <div class="d-flex flex-column gap-2">
+                        <button class="btn btn-outline-secondary w-100" onclick="downloadIncidentTemplate()">
+                            <i class="bi bi-download me-1"></i> Download Template
+                        </button>
+                        <input id="csvFile" type="file" accept=".csv" class="form-control">
+                        <button id="btnImport" class="btn btn-warning w-100" onclick="runAction('import')">
+                            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Upload &amp; Import
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: User Management -->
+            <div class="col-md-3">
+                <div class="panel h-100 d-flex flex-column">
+                    <h2 class="d-flex align-items-center gap-2">
+                        <i class="bi bi-people-fill text-info"></i>
+                        User Management
+                    </h2>
+                    <p class="text-secondary flex-grow-1">
+                        Add, edit, or remove users and control which modules each
+                        user can access.
+                    </p>
+                    <a href="{{ request.script_root }}/admin/users" class="btn btn-info w-100 text-white">
+                        <i class="bi bi-person-gear me-1"></i> Manage Users
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ServiceNow Groups -->
+        <div class="panel mt-4">
+            <h2 class="d-flex align-items-center gap-2">
+                <i class="bi bi-diagram-3 text-primary"></i>
+                ServiceNow Assignment Groups
+            </h2>
+            <p class="text-secondary small mb-3">
+                These groups filter which incidents are synced from ServiceNow.
+                Leave the list empty to pull all resolved/closed incidents.
+            </p>
+
+            <!-- Add group form -->
+            <div class="d-flex gap-2 mb-3">
+                <input id="newGroupName" type="text" class="form-control form-control-sm"
+                    placeholder="e.g. Application Support" style="max-width:320px">
+                <button class="btn btn-primary btn-sm" onclick="addSnowGroup()">
+                    <i class="bi bi-plus-lg me-1"></i>Add Group
+                </button>
+            </div>
+
+            <!-- Groups list -->
+            <div id="snowGroupsList">
+                <span class="text-secondary small">Loading…</span>
+            </div>
+        </div>
+
+        <!-- Index status -->
+        <div class="panel mt-4">
+            <h2><i class="bi bi-bar-chart-line me-2"></i>Index Status</h2>
+            <div id="indexStatus" class="text-secondary">Loadingâ€¦</div>
+        </div>
+
+    </main>
+    <script src="static/js/utils.js"></script>
+    <script src="static/js/admin.js"></script>
+</body>
+
+</html>

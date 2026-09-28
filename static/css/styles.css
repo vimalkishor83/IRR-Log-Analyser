@@ -1,0 +1,283 @@
+/* ── Base ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: #f0f2f5;
+  font-size: .9rem;
+  /* Reserve scrollbar gutter so layout doesn't shift between machines */
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────────── */
+.irr-navbar {
+  background: #0f172a;
+  padding: .5rem 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+/* Brand */
+.irr-brand-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.irr-brand-org     { color: #60a5fa; font-weight: 700; font-size: .95rem; }
+.irr-brand-product { color: #f1f5f9; font-weight: 700; font-size: .95rem; }
+.irr-brand-sub     { color: #64748b; font-size: .72rem; border-left: 1px solid #334155; padding-left: .65rem; margin-left: .4rem; line-height: 1; }
+.navbar-brand:hover .irr-brand-org { color: #93c5fd; }
+
+/* Nav links */
+.irr-nav-link {
+  display: flex;
+  align-items: center;
+  padding: .38rem .75rem;
+  border-radius: 7px;
+  color: #94a3b8;
+  font-size: .84rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.irr-nav-link:hover { background: #1e293b; color: #f1f5f9; }
+.irr-nav-active     { background: linear-gradient(135deg,#1e3a5f,#2d1f6e); color: #60a5fa !important; }
+.irr-nav-active i   { color: #60a5fa; }
+
+/* User chip */
+.irr-user-chip {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: #1e293b;
+  border-radius: 8px;
+  padding: .3rem .65rem .3rem .4rem;
+}
+.irr-user-avatar {
+  width: 26px; height: 26px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.irr-user-name { color: #f1f5f9; font-size: .78rem; font-weight: 600; line-height: 1.2; }
+.irr-user-role { color: #64748b; font-size: .68rem; line-height: 1; }
+
+/* Logout button */
+.irr-logout-btn {
+  display: flex;
+  align-items: center;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: .35rem .7rem;
+  color: #94a3b8;
+  font-size: .82rem;
+  text-decoration: none;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.irr-logout-btn:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+/* ── Nav collapse (replaces Bootstrap JS collapse) ───────────────────────── */
+/* On large screens the collapse div is always flex (Bootstrap grid does this).
+   On small screens it starts hidden; .irr-nav-open shows it. */
+@media (max-width: 991px) {
+  .irr-nav-collapse {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    padding: .5rem 0;
+  }
+  .irr-nav-collapse.irr-nav-open {
+    display: flex;
+  }
+  .irr-nav-collapse .navbar-nav {
+    flex-direction: column;
+    margin: 0 !important;
+    gap: 2px;
+  }
+  .irr-nav-collapse > .d-flex {
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px solid #1e293b;
+  }
+}
+@media (min-width: 992px) {
+  .irr-nav-collapse {
+    display: flex !important;
+    flex: 1;
+    align-items: center;
+  }
+}
+
+/* ── Main container ──────────────────────────────────────────────────────── */
+.irr-main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+}
+
+/* ── Card shell ──────────────────────────────────────────────────────────── */
+.irr-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+/* Coloured left-border accent variants */
+.irr-card-accent-blue   { border-left: 3px solid #3b82f6; }
+.irr-card-accent-indigo { border-left: 3px solid #6366f1; }
+.irr-card-accent-amber  { border-left: 3px solid #f59e0b; }
+.irr-card-accent-red    { border-left: 3px solid #ef4444; }
+
+.irr-card-title {
+  font-size: .85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: .85rem;
+  display: flex;
+  align-items: center;
+}
+
+/* ── KPI grid ────────────────────────────────────────────────────────────── */
+.kpi-grid-new {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
+  height: 100%;
+}
+
+.kpi-card {
+  border-radius: 12px;
+  padding: .85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  border: 1px solid transparent;
+}
+
+.kpi-icon {
+  font-size: 1.4rem;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-label { font-size: .72rem; color: #6b7280; font-weight: 500; line-height: 1.2; }
+.kpi-value { font-size: 1.45rem; font-weight: 700; color: #111827; line-height: 1.1; margin-top: 2px; }
+.kpi-value-sm { font-size: 1rem; }
+
+.kpi-blue    { background:#eff6ff; border-color:#bfdbfe; }
+.kpi-blue    .kpi-icon { background:#dbeafe; color:#1d4ed8; }
+
+.kpi-red     { background:#fff1f2; border-color:#fecdd3; }
+.kpi-red     .kpi-icon { background:#fee2e2; color:#dc2626; }
+
+.kpi-purple  { background:#f5f3ff; border-color:#ddd6fe; }
+.kpi-purple  .kpi-icon { background:#ede9fe; color:#7c3aed; }
+
+.kpi-darkred { background:#fff7ed; border-color:#fed7aa; }
+.kpi-darkred .kpi-icon { background:#ffedd5; color:#c2410c; }
+
+.kpi-amber   { background:#fffbeb; border-color:#fde68a; }
+.kpi-amber   .kpi-icon { background:#fef3c7; color:#b45309; }
+
+.kpi-teal    { background:#f0fdfa; border-color:#99f6e4; }
+.kpi-teal    .kpi-icon { background:#ccfbf1; color:#0f766e; }
+
+.kpi-slate   { background:#f8fafc; border-color:#cbd5e1; }
+.kpi-slate   .kpi-icon { background:#f1f5f9; color:#475569; }
+
+.kpi-green   { background:#f0fdf4; border-color:#bbf7d0; }
+.kpi-green   .kpi-icon { background:#dcfce7; color:#15803d; }
+
+/* ── Charts ──────────────────────────────────────────────────────────────── */
+.chart-wrap { position: relative; flex: 1; min-height: 200px; max-height: 320px; }
+
+/* ── Top Issues ──────────────────────────────────────────────────────────── */
+.top-issue-row {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  padding: .45rem .6rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  margin-bottom: .4rem;
+  transition: background .12s, border-color .12s;
+}
+.top-issue-row:hover { background: #eff6ff; border-color: #93c5fd; }
+.top-issue-row:last-child { margin-bottom: 0; }
+
+/* ── Severity badges ─────────────────────────────────────────────────────── */
+.badge-severity { min-width: 68px; text-align: center; color: #fff; font-size: .72rem; border-radius: 6px; }
+.badge-severity.sev-FATAL,
+.badge-severity.sev-CRITICAL { background: linear-gradient(135deg,#7c2d12,#991b1b); }
+.badge-severity.sev-ERROR    { background: linear-gradient(135deg,#dc2626,#b91c1c); }
+.badge-severity.sev-WARN,
+.badge-severity.sev-WARNING  { background: linear-gradient(135deg,#d97706,#b45309); }
+.badge-severity.sev-INFO     { background: linear-gradient(135deg,#2563eb,#1d4ed8); }
+.badge-severity.sev-DEBUG    { background: linear-gradient(135deg,#6b7280,#4b5563); }
+
+/* ── Log viewer ──────────────────────────────────────────────────────────── */
+#logRows tr { cursor: pointer; }
+#logRows tr:hover { background: #eff6ff; }
+#logRows tr .float-end { opacity: .4; transition: opacity .15s; }
+#logRows tr:hover .float-end { opacity: 1; }
+
+/* Log table header — coloured */
+.log-table-head { background: linear-gradient(90deg, #1e3a5f, #312e81); }
+.log-table-head th { color: #cbd5e1 !important; font-size: .75rem; font-weight: 600; padding: .6rem .75rem; border: none; }
+
+pre.stack {
+  white-space: pre-wrap;
+  font-size: .78rem;
+  background: #f6f8fa;
+  padding: 6px 10px;
+  border-radius: 5px;
+  margin-bottom: 0;
+}
+
+/* ── Upload panel accent ─────────────────────────────────────────────────── */
+.upload-header {
+  background: linear-gradient(135deg, #1e3a5f, #1e293b);
+  border-radius: 10px 10px 0 0;
+  padding: .6rem 1rem;
+  margin: -1.1rem -1.25rem .85rem;
+}
+.upload-header .irr-card-title { color: #e2e8f0; margin-bottom: 0; }
+
+/* Analyse button */
+#startAnalysis  { background: linear-gradient(135deg,#2563eb,#4f46e5); border: none; }
+#startAnalysis:hover { opacity: .9; }
+
+/* ── Form controls global colour ────────────────────────────────────────── */
+.form-control:focus, .form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) { .kpi-grid-new { grid-template-columns: repeat(4,1fr); } }
+@media (max-width: 768px)  { .kpi-grid-new { grid-template-columns: repeat(2,1fr); } .irr-main { padding: .75rem; } }
+
+/* ── Panel (legacy) ─────────────────────────────────────────────────────── */
+.panel { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:1.1rem 1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.panel h1, .panel h2 { font-size: .9rem; font-weight: 600; color: #374151; margin-bottom: .85rem; }
