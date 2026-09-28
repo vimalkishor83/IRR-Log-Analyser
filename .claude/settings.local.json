@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"C:\\\\Users\\\\vimal\\\\OneDrive\\\\Desktop\\\\New folder\\\\mock_servicenow\\\\\")",
+      "Read(//c/Users/vimal/OneDrive/Desktop/New folder/**)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\vimal\\\\OneDrive\\\\Desktop\\\\New folder\\\\mock_servicenow\\\\templates\")",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\vimal\\\\OneDrive\\\\Desktop\\\\New folder\\\\mock_servicenow\\\\static\\\\css\")",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\vimal\\\\OneDrive\\\\Desktop\\\\New folder\\\\mock_servicenow\\\\static\\\\js\")",
+      "Bash(xargs grep -l \"upload\\\\|file\")",
+      "Bash(python -c \"import ast, sys; ast.parse\\(open\\('app.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")"
+    ]
+  }
+}
