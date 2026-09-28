@@ -6,7 +6,6 @@ Admin panel routes: user management, sync controls, audit log.
 
 import csv
 import logging
-from pathlib import Path
 
 from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
