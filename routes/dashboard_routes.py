@@ -1,10 +1,8 @@
-"""Log Analyzer dashboard — page + all its API endpoints."""
+"""Log Analyzer dashboard — page + its log-viewer routes."""
 
-import csv
-import io
 import logging
 
-from flask import Blueprint, Response, jsonify, render_template, request, session
+from flask import Blueprint, redirect, render_template, request, session, url_for
 from sqlalchemy import func
 
 from core.auth import login_required, module_required
@@ -15,6 +13,8 @@ from services.log_analyzer import LogAnalyzer
 log = logging.getLogger(__name__)
 dashboard_bp = Blueprint("dashboard", __name__)
 
+PER_PAGE = 100
+
 
 def _audit(action, details=""):
     db.session.add(AuditLog(username=session.get("username", "system"), action=action, details=details))
@@ -24,14 +24,65 @@ def _audit(action, details=""):
 @dashboard_bp.route("/")
 @module_required("dashboard")
 def index():
-    return render_template("dashboard.html")
+    uploaded_by = session.get("username", "")
+    severity    = request.args.get("severity", "")
+    search      = request.args.get("search", "").strip()
+    page        = max(1, request.args.get("page", 1, type=int))
+
+    query = ParsedLog.query.filter_by(uploaded_by=uploaded_by)
+    if severity:
+        query = query.filter_by(severity=severity)
+    if search:
+        query = query.filter(ParsedLog.message.ilike(f"%{search}%"))
+
+    total_log_count = query.count()
+    rows = query.order_by(ParsedLog.timestamp.desc()).offset((page - 1) * PER_PAGE).limit(PER_PAGE).all()
+
+    return render_template(
+        "dashboard.html",
+        kpis=_kpi_data(uploaded_by),
+        severity_chart=_severity_chart_data(uploaded_by),
+        app_chart=_app_chart_data(uploaded_by),
+        top_issues=_top_issues(uploaded_by),
+        log_rows=rows,
+        severity_filter=severity,
+        search=search,
+        page=page,
+        per_page=PER_PAGE,
+        total_log_count=total_log_count,
+        total_pages=max(1, -(-total_log_count // PER_PAGE)),
+        message=request.args.get("message"),
+    )
 
 
-@dashboard_bp.get("/api/dashboard")
+@dashboard_bp.post("/analyze")
 @login_required
-def dashboard_data():
+def analyze_logs():
+    files = request.files.getlist("files")
+    if not files or not any(f.filename for f in files):
+        return redirect(url_for("dashboard.index", message="Please select at least one log file."))
+
+    # Files are read into memory and parsed — nothing is written to disk
+    result = LogAnalyzer().analyze_uploads(files, session.get("username", ""))
+    _audit("file_processing", f"Processed {len(files)} files")
+    messages = result.get("messages") or []
+    summary  = "; ".join(messages) if messages else f"Analysis completed. {result['total_lines']} log rows parsed."
+    return redirect(url_for("dashboard.index", message=summary))
+
+
+@dashboard_bp.post("/clear-analysis")
+@login_required
+def clear_analysis():
+    uploaded_by = session.get("username", "")
+    ParsedLog.query.filter_by(uploaded_by=uploaded_by).delete()
+    ErrorSignature.query.filter_by(uploaded_by=uploaded_by).delete()
+    db.session.commit()
+    _audit("clear_analysis", "Cleared parsed logs")
+    return redirect(url_for("dashboard.index", message="Analysis cleared."))
+
+
+def _kpi_data(uploaded_by):
     error_levels = ("ERROR", "FATAL", "CRITICAL")
-    uploaded_by  = session.get("username", "")
 
     sev_rows = (
         db.session.query(ParsedLog.severity, func.count())
@@ -39,83 +90,70 @@ def dashboard_data():
         .group_by(ParsedLog.severity)
         .all()
     )
-    sev_map  = {s: c for s, c in sev_rows}
+    sev_map = {s: c for s, c in sev_rows}
 
-    total_logs      = sum(sev_map.values())
-    total_errors    = sum(c for s, c in sev_rows if s in error_levels)
-    critical_errors = sum(c for s, c in sev_rows if s in ("FATAL", "CRITICAL"))
-    warning_count   = sev_map.get("WARN", 0)
-    unique_errors   = (
+    unique_errors = (
         db.session.query(func.count(ParsedLog.signature.distinct()))
         .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
         .scalar() or 0
     )
-
-    app_rows = (
+    top_app = (
         db.session.query(ParsedLog.application, func.count())
         .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
         .group_by(ParsedLog.application)
         .order_by(func.count().desc())
-        .all()
+        .first()
     )
-    server_rows = (
+    top_server = (
         db.session.query(ParsedLog.server, func.count())
         .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
         .group_by(ParsedLog.server)
         .order_by(func.count().desc())
-        .all()
+        .first()
     )
 
-    applications = {a or "Unknown": c for a, c in app_rows[:5]}
-    servers      = {s or "Unknown": c for s, c in server_rows}
-    severities   = dict(sorted(sev_map.items(), key=lambda x: x[1], reverse=True))
-
-    return jsonify({
-        "kpis": {
-            "total_logs":           total_logs,
-            "total_errors":         total_errors,
-            "unique_errors":        unique_errors,
-            "critical_errors":      critical_errors,
-            "warning_count":        warning_count,
-            "top_application":      next(iter(applications), "None"),
-            "top_server":           next(iter(servers), "None"),
-            "knowledge_base_size": Incident.query.count() + KBArticle.query.filter_by(active=True).count(),
-        },
-        "charts": {
-            "severity":     severities,
-            "applications": applications,
-            "servers":      servers,
-        },
-    })
+    return {
+        "total_logs":          sum(sev_map.values()),
+        "total_errors":        sum(c for s, c in sev_rows if s in error_levels),
+        "unique_errors":       unique_errors,
+        "critical_errors":     sum(c for s, c in sev_rows if s in ("FATAL", "CRITICAL")),
+        "warning_count":       sev_map.get("WARN", 0),
+        "top_application":     (top_app[0] or "Unknown") if top_app else "None",
+        "top_server":          (top_server[0] or "Unknown") if top_server else "None",
+        "knowledge_base_size": Incident.query.count() + KBArticle.query.filter_by(active=True).count(),
+    }
 
 
-@dashboard_bp.get("/api/logs")
-@login_required
-def get_logs():
-    severity = request.args.get("severity", "")
-    search   = request.args.get("search", "")
-    page     = max(1, int(request.args.get("page", 1)))
-    per_page = 100
-
-    query = ParsedLog.query.filter_by(uploaded_by=session.get("username", ""))
-    if severity:
-        query = query.filter_by(severity=severity)
-    if search:
-        query = query.filter(ParsedLog.message.ilike(f"%{search}%"))
-
-    rows = query.order_by(ParsedLog.timestamp.desc()).offset((page - 1) * per_page).limit(per_page).all()
-    return jsonify([_log_dict(row) for row in rows])
+def _severity_chart_data(uploaded_by):
+    rows = (
+        db.session.query(ParsedLog.severity, func.count())
+        .filter(ParsedLog.uploaded_by == uploaded_by)
+        .group_by(ParsedLog.severity)
+        .all()
+    )
+    return dict(sorted(((s, c) for s, c in rows), key=lambda x: x[1], reverse=True))
 
 
-@dashboard_bp.get("/api/logs/top-issues")
-@login_required
-def top_issues():
+def _app_chart_data(uploaded_by):
+    error_levels = ("ERROR", "FATAL", "CRITICAL")
+    rows = (
+        db.session.query(ParsedLog.application, func.count())
+        .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
+        .group_by(ParsedLog.application)
+        .order_by(func.count().desc())
+        .limit(5)
+        .all()
+    )
+    return {a or "Unknown": c for a, c in rows}
+
+
+def _top_issues(uploaded_by):
     """Return top 5 ERROR/CRITICAL issues with a probable root cause per issue."""
     error_levels = ("ERROR", "FATAL", "CRITICAL")
 
     rows = (
         ParsedLog.query
-        .filter(ParsedLog.uploaded_by == session.get("username", ""), ParsedLog.severity.in_(error_levels))
+        .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
         .order_by(ParsedLog.timestamp.desc())
         .all()
     )
@@ -151,94 +189,6 @@ def top_issues():
             "root_cause": root_cause if root_cause != "No errors found." else None,
             "example":    issue["entries"][0]["message"] if issue["entries"] else "",
         })
-    return jsonify(result)
-
-
-@dashboard_bp.get("/api/logs/export")
-@login_required
-def export_logs():
-    """Export the current parsed log data as a CSV download."""
-    severity = request.args.get("severity", "")
-    search   = request.args.get("search", "")
-
-    query = ParsedLog.query.filter_by(uploaded_by=session.get("username", ""))
-    if severity:
-        query = query.filter_by(severity=severity)
-    if search:
-        query = query.filter(ParsedLog.message.ilike(f"%{search}%"))
-
-    rows = query.order_by(ParsedLog.timestamp.desc()).all()
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Timestamp", "Severity", "Application", "Server", "Error Code", "Exception", "Message", "Source File", "Line"])
-    for r in rows:
-        writer.writerow([
-            r.timestamp.isoformat(sep=" ") if r.timestamp else "",
-            r.severity, r.application, r.server,
-            r.error_code, r.exception, r.message,
-            r.source_file, r.line_number,
-        ])
-
-    _audit("export_logs", f"{len(rows)} rows exported")
-    return Response(
-        output.getvalue(),
-        mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=logs_export.csv"},
-    )
-
-
-@dashboard_bp.get("/api/logs/count")
-@login_required
-def logs_count():
-    """Return total row count for the current filter (used by pagination)."""
-    severity = request.args.get("severity", "")
-    search   = request.args.get("search", "")
-    query    = ParsedLog.query.filter_by(uploaded_by=session.get("username", ""))
-    if severity:
-        query = query.filter_by(severity=severity)
-    if search:
-        query = query.filter(ParsedLog.message.ilike(f"%{search}%"))
-    return jsonify({"count": query.count()})
-
-
-@dashboard_bp.post("/api/analyze")
-@login_required
-def analyze_logs():
-    files = request.files.getlist("files")
-    if not files:
-        return jsonify({"error": "Please select at least one log file."}), 400
-
-    # Files are read into memory and parsed — nothing is written to disk
-    result = LogAnalyzer().analyze_uploads(files, session.get("username", ""))
-    _audit("file_processing", f"Processed {len(files)} files")
-    return jsonify(result)
-
-
-@dashboard_bp.post("/api/clear-analysis")
-@login_required
-def clear_analysis():
-    uploaded_by = session.get("username", "")
-    ParsedLog.query.filter_by(uploaded_by=uploaded_by).delete()
-    ErrorSignature.query.filter_by(uploaded_by=uploaded_by).delete()
-    db.session.commit()
-    _audit("clear_analysis", "Cleared parsed logs")
-    return jsonify({"message": "Analysis cleared."})
-
-
-def _log_dict(row):
-    return {
-        "timestamp":   row.timestamp.isoformat(sep=" ") if row.timestamp else "",
-        "severity":    row.severity,
-        "application": row.application,
-        "server":      row.server,
-        "thread_id":   row.thread_id,
-        "error_code":  row.error_code,
-        "exception":   row.exception,
-        "message":     row.message,
-        "stack_trace": row.stack_trace,
-        "source_file": row.source_file,
-        "line_number": row.line_number,
-    }
+    return result
 
 

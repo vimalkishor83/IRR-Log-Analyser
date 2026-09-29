@@ -25,25 +25,24 @@
             <div class="irr-card-title mb-0"><i class="bi bi-folder2-open me-2" style="color:#60a5fa"></i>Log File
               Selection</div>
           </div>
-          <div class="mb-3">
-            <label class="form-label small text-muted mb-1">Single or multiple log files</label>
-            <input id="filePicker" class="form-control form-control-sm" type="file" multiple
-              accept=".log,.txt,.out,.csv,.gz">
-            <div id="filePickerText" class="form-text">Supported: .log .txt .out .csv .gz</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small text-muted mb-1">Complete folder</label>
-            <input id="folderPicker" class="form-control form-control-sm" type="file" webkitdirectory multiple>
-            <div id="folderPickerText" class="form-text">Logs inside a single folder</div>
-          </div>
-
-          <div class="d-flex gap-2 flex-wrap">
-            <button id="startAnalysis" class="btn btn-primary btn-sm"><i
-                class="bi bi-play-fill me-1"></i>Analyse</button>
-            <button id="clearAnalysis" class="btn btn-outline-secondary btn-sm"><i
-                class="bi bi-x-circle me-1"></i>Clear</button>
-          </div>
-          <div id="messages" class="small text-secondary mt-2"></div>
+          <form method="post" action="{{ url_for('dashboard.analyze_logs') }}" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label class="form-label small text-muted mb-1">Single or multiple log files</label>
+              <input name="files" class="form-control form-control-sm" type="file" multiple
+                accept=".log,.txt,.out,.csv,.gz">
+              <div class="form-text">Supported: .log .txt .out .csv .gz</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small text-muted mb-1">Complete folder</label>
+              <input name="files" class="form-control form-control-sm" type="file" webkitdirectory multiple>
+              <div class="form-text">Logs inside a single folder</div>
+            </div>
+            <button class="btn btn-primary btn-sm"><i class="bi bi-play-fill me-1"></i>Analyse</button>
+          </form>
+          <form method="post" action="{{ url_for('dashboard.clear_analysis') }}" class="d-inline">
+            <button class="btn btn-outline-secondary btn-sm mt-2"><i class="bi bi-x-circle me-1"></i>Clear</button>
+          </form>
+          {% if message %}<div class="small text-secondary mt-2">{{ message }}</div>{% endif %}
         </div>
       </div>
 
@@ -54,56 +53,56 @@
             <div class="kpi-icon"><i class="bi bi-file-earmark-text"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Total Logs</div>
-              <div class="kpi-value" id="totalLogs">0</div>
+              <div class="kpi-value">{{ kpis.total_logs }}</div>
             </div>
           </div>
           <div class="kpi-card kpi-red">
             <div class="kpi-icon"><i class="bi bi-exclamation-octagon"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Total Errors</div>
-              <div class="kpi-value" id="totalErrors">0</div>
+              <div class="kpi-value">{{ kpis.total_errors }}</div>
             </div>
           </div>
           <div class="kpi-card kpi-purple">
             <div class="kpi-icon"><i class="bi bi-fingerprint"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Unique Errors</div>
-              <div class="kpi-value" id="uniqueErrors">0</div>
+              <div class="kpi-value">{{ kpis.unique_errors }}</div>
             </div>
           </div>
           <div class="kpi-card kpi-darkred">
             <div class="kpi-icon"><i class="bi bi-lightning-charge"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Critical</div>
-              <div class="kpi-value" id="criticalErrors">0</div>
+              <div class="kpi-value">{{ kpis.critical_errors }}</div>
             </div>
           </div>
           <div class="kpi-card kpi-amber">
             <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Warnings</div>
-              <div class="kpi-value" id="warningCount">0</div>
+              <div class="kpi-value">{{ kpis.warning_count }}</div>
             </div>
           </div>
           <div class="kpi-card kpi-teal">
             <div class="kpi-icon"><i class="bi bi-grid-1x2"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Top App</div>
-              <div class="kpi-value kpi-value-sm" id="topApplication">—</div>
+              <div class="kpi-value kpi-value-sm">{{ kpis.top_application }}</div>
             </div>
           </div>
           <div class="kpi-card kpi-slate">
             <div class="kpi-icon"><i class="bi bi-server"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Top Server</div>
-              <div class="kpi-value kpi-value-sm" id="topServer">—</div>
+              <div class="kpi-value kpi-value-sm">{{ kpis.top_server }}</div>
             </div>
           </div>
           <div class="kpi-card kpi-green">
             <div class="kpi-icon"><i class="bi bi-lightbulb"></i></div>
             <div class="kpi-body">
               <div class="kpi-label">Knowledge Base</div>
-              <div class="kpi-value" id="recommendationCount">0</div>
+              <div class="kpi-value">{{ kpis.knowledge_base_size }}</div>
             </div>
           </div>
         </div>
@@ -144,14 +143,42 @@
         <div class="irr-card h-100 d-flex flex-column irr-card-accent-amber">
           <div class="irr-card-title d-flex align-items-center justify-content-between">
             <span><i class="bi bi-fire me-2 text-warning"></i>Top Issues</span>
-            <span class="badge bg-secondary fw-normal" id="topIssuesCount" style="font-size:.7rem"></span>
+            {% if top_issues %}
+            <span class="badge bg-secondary fw-normal" style="font-size:.7rem">{{ top_issues|length }} pattern{{ 's' if top_issues|length != 1 }}</span>
+            {% endif %}
           </div>
-          <div id="topIssues" class="flex-fill" style="overflow-y:auto">
+          <div class="flex-fill" style="overflow-y:auto">
+            {% if not top_issues %}
             <p class="text-muted small mb-0 mt-1">Load log files to see recurring issues.</p>
+            {% else %}
+            {% set sev_colour = {'CRITICAL': '#7c2d12', 'ERROR': '#dc2626', 'WARN': '#d97706', 'INFO': '#2563eb'} %}
+            {% for issue in top_issues %}
+            {% set q = [issue.key, issue.example]|select|join(' ') %}
+            <a href="{{ url_for('recommendations.recommendations_page', q=q) }}" class="d-flex align-items-start gap-2 mb-2 p-2 rounded top-issue-row text-decoration-none"
+               style="border:1px solid #e2e8f0;background:#f8fafc">
+              <span class="badge mt-1 flex-shrink-0" style="background:{{ sev_colour.get(issue.severity, '#6b7280') }};font-size:.65rem;min-width:52px;text-align:center">
+                {{ issue.severity }}
+              </span>
+              <div class="flex-fill overflow-hidden">
+                <div class="fw-semibold small text-truncate" title="{{ issue.key }}">{{ issue.key }}</div>
+                <div class="text-muted" style="font-size:.72rem">
+                  {{ issue.count }}× occurrence{{ 's' if issue.count != 1 }}
+                  {% if issue.app %} &bull; {{ issue.app }}{% endif %}
+                </div>
+                {% if issue.root_cause %}
+                <div style="font-size:.7rem;color:#92400e;margin-top:2px"><i class="bi bi-lightbulb-fill me-1" style="color:#f59e0b"></i>{{ issue.root_cause }}</div>
+                {% endif %}
+              </div>
+              <i class="bi bi-arrow-right text-muted mt-1 flex-shrink-0" style="font-size:.8rem"></i>
+            </a>
+            {% endfor %}
+            {% endif %}
           </div>
-          <div class="pt-2 border-top small text-muted mt-2" id="topIssuesHint" style="display:none">
+          {% if top_issues %}
+          <div class="pt-2 border-top small text-muted mt-2">
             <i class="bi bi-cursor me-1"></i>Click an issue to find resolution steps.
           </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -161,22 +188,16 @@
       <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <div class="irr-card-title mb-0"><i class="bi bi-journals me-2" style="color:#6366f1"></i>Detailed Log Viewer
         </div>
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-          <select id="severityFilter" class="form-select form-select-sm" style="width:auto">
+        <form method="get" action="{{ url_for('dashboard.index') }}" class="d-flex gap-2 flex-wrap align-items-center">
+          <select name="severity" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
             <option value="">All</option>
-            <option>CRITICAL</option>
-            <option>ERROR</option>
-            <option>WARN</option>
-            <option>INFO</option>
-            <option>DEBUG</option>
-            <option>FATAL</option>
+            {% for sev in ['CRITICAL', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'FATAL'] %}
+            <option value="{{ sev }}" {{ 'selected' if severity_filter == sev }}>{{ sev }}</option>
+            {% endfor %}
           </select>
-          <input id="logSearch" class="form-control form-control-sm" placeholder="Search…" style="width:180px">
-    
-          <button id="exportCsv" class="btn btn-outline-secondary btn-sm" title="Export current view to CSV">
-            <i class="bi bi-download me-1"></i>Export CSV
-          </button>
-        </div>
+          <input name="search" class="form-control form-control-sm" placeholder="Search…" style="width:180px" value="{{ search }}">
+          <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
+        </form>
       </div>
       <div class="table-responsive">
         <table class="table table-sm table-hover align-middle mb-0">
@@ -191,25 +212,90 @@
               <th>Message</th>
             </tr>
           </thead>
-          <tbody id="logRows"></tbody>
+          <tbody>
+            {% for row in log_rows %}
+            {% set q = [row.exception, row.error_code, row.message]|select|join(' ') %}
+            <tr>
+              <td>{{ row.timestamp.isoformat(sep=' ') if row.timestamp else '' }}</td>
+              <td><span class="badge badge-severity sev-{{ row.severity }}">{{ row.severity }}</span></td>
+              <td>{{ row.application }}</td>
+              <td>{{ row.server }}</td>
+              <td>{{ row.error_code }}</td>
+              <td>{{ row.exception }}</td>
+              <td>
+                {{ row.message }}
+                {% if row.stack_trace %}<pre class="stack mt-2">{{ row.stack_trace }}</pre>{% endif %}
+                <a class="badge bg-primary ms-2 float-end text-decoration-none" style="font-size:.65rem"
+                   href="{{ url_for('recommendations.recommendations_page', q=q, app=row.application or '') }}"
+                   title="Find resolution recommendations">
+                  <i class="bi bi-search"></i> Find Fix
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
         </table>
       </div>
       <!-- Pagination -->
-      <div class="d-flex align-items-center justify-content-between mt-2" id="paginationBar"
-        style="display:none!important">
-        <div class="small text-muted" id="pageInfo"></div>
+      {% if total_log_count > 0 %}
+      <div class="d-flex align-items-center justify-content-between mt-2">
+        <div class="small text-muted">
+          Showing {{ (page - 1) * per_page + 1 }}–{{ [page * per_page, total_log_count]|min }} of {{ total_log_count }} rows
+        </div>
         <div class="d-flex gap-1">
-          <button id="prevPage" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></button>
-          <button id="nextPage" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></button>
+          <a class="btn btn-outline-secondary btn-sm {{ 'disabled' if page <= 1 }}"
+             href="{{ url_for('dashboard.index', severity=severity_filter, search=search, page=page-1) }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+          <a class="btn btn-outline-secondary btn-sm {{ 'disabled' if page >= total_pages }}"
+             href="{{ url_for('dashboard.index', severity=severity_filter, search=search, page=page+1) }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
         </div>
       </div>
+      {% endif %}
     </div>
 
   </main>
 
   <script src="{{ url_for('common_static', filename='chartjs/chart.umd.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script id="chartData" type="application/json">
+    {{ {"severity": severity_chart, "applications": app_chart}|tojson }}
+  </script>
+  <script>
+    (function () {
+      const data = JSON.parse(document.getElementById("chartData").textContent);
+      const COLOURS = ["#2563eb", "#dc2626", "#f59e0b", "#059669", "#7c3aed", "#64748b", "#0891b2", "#d97706"];
+      const SEV_COLOURS = { FATAL: "#7c2d12", CRITICAL: "#991b1b", ERROR: "#dc2626", WARN: "#f59e0b", WARNING: "#f59e0b", INFO: "#2563eb", DEBUG: "#6b7280" };
+
+      function renderChart(id, type, values) {
+        const rawLabels = Object.keys(values);
+        const labels = type === "bar"
+          ? rawLabels.map(l => { const s = l.split(/[/\\]/).pop(); return s.length > 16 ? s.slice(0, 14) + "…" : s; })
+          : rawLabels;
+        const backgroundColours = type === "doughnut"
+          ? labels.map(l => SEV_COLOURS[l.toUpperCase()] || COLOURS[labels.indexOf(l) % COLOURS.length])
+          : COLOURS;
+
+        new Chart(document.getElementById(id), {
+          type,
+          data: { labels, datasets: [{ data: Object.values(values), backgroundColor: backgroundColours,
+            borderRadius: type === "bar" ? 6 : 0, borderWidth: type === "doughnut" ? 2 : 0, borderColor: "#fff" }] },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: type === "bar" ? { display: false } : { position: "bottom", labels: { boxWidth: 10, padding: 10, font: { size: 11 } } } },
+            scales: type === "doughnut" ? {} : {
+              y: { beginAtZero: true, ticks: { font: { size: 11 } }, grid: { color: "#f1f5f9" } },
+              x: { ticks: { font: { size: 10 }, maxRotation: 35, minRotation: 35 }, grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      renderChart("severityChart", "doughnut", data.severity);
+      renderChart("appChart", "bar", data.applications);
+    })();
+  </script>
 </body>
 
 </html>
