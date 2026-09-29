@@ -1,8 +1,8 @@
-"""Knowledge Repository page and its CRUD API."""
+"""Knowledge Repository page and its CRUD routes."""
 
-from flask import Blueprint, jsonify, render_template, request, session
+from flask import Blueprint, redirect, render_template, request, session, url_for
 
-from core.auth import login_required, module_required
+from core.auth import module_required
 from core.database import db
 from core.models import AuditLog
 from services.knowledge_service import KnowledgeService
@@ -15,74 +15,100 @@ def _audit(action, details=""):
     db.session.commit()
 
 
+def _back_to_list(status=None, error=None, edit_id=None):
+    """Redirect back to the knowledge list, preserving the filter/search the form was submitted from."""
+    return redirect(url_for(
+        "knowledge.knowledge_page",
+        filter=request.form.get("filter", "all"),
+        search=request.form.get("search", ""),
+        status=status, error=error, edit=edit_id,
+    ))
+
+
 @knowledge_bp.get("/knowledge")
 @module_required("knowledge")
 def knowledge_page():
-    return render_template("knowledge.html")
+    status_filter = request.args.get("filter", "all")
+    search        = request.args.get("search", "").strip()
+    entries       = KnowledgeService().list_all(status=status_filter, search=search)
+    return render_template(
+        "knowledge.html",
+        entries=entries,
+        total_count=len(KnowledgeService().list_all()),
+        status_filter=status_filter,
+        search=search,
+        edit_id=request.args.get("edit", type=int),
+        status=request.args.get("status"),
+        error=request.args.get("error"),
+    )
 
 
-@knowledge_bp.get("/api/knowledge")
-@login_required
-def list_knowledge():
-    svc   = KnowledgeService()
-    items = svc.list_all()
-    return jsonify([{
-        "id":               e.id,
-        "pattern":          e.pattern,
-        "meaning":          e.meaning,
-        "resolution":       e.resolution,
-        "assignment_group": e.assignment_group,
-        "frequency":        e.frequency,
-        "active":           e.active,
-    } for e in items])
-
-
-@knowledge_bp.post("/api/knowledge")
-@login_required
+@knowledge_bp.post("/knowledge/add")
+@module_required("knowledge")
 def add_knowledge():
-    data = request.get_json(silent=True) or {}
-    if not data.get("pattern"):
-        return jsonify({"error": "Pattern is required"}), 400
-    entry = KnowledgeService().add(data)
+    pattern    = (request.form.get("pattern") or "").strip()
+    meaning    = (request.form.get("meaning") or "").strip()
+    resolution = (request.form.get("resolution") or "").strip()
+
+    if not (pattern and meaning and resolution):
+        return _back_to_list(error="Error Pattern, Meaning, and Resolution are required.")
+
+    entry = KnowledgeService().add({
+        "pattern": pattern,
+        "meaning": meaning,
+        "resolution": resolution,
+        "assignment_group": (request.form.get("assignment_group") or "").strip(),
+    })
     _audit("add_knowledge", entry.pattern)
-    return jsonify({"message": "Entry added", "id": entry.id}), 201
+    return _back_to_list(status="Knowledge entry added successfully.")
 
 
-@knowledge_bp.put("/api/knowledge/<int:entry_id>")
-@login_required
+@knowledge_bp.post("/knowledge/<int:entry_id>/edit")
+@module_required("knowledge")
 def update_knowledge(entry_id):
-    data  = request.get_json(silent=True) or {}
-    entry = KnowledgeService().update(entry_id, data)
+    pattern    = (request.form.get("pattern") or "").strip()
+    meaning    = (request.form.get("meaning") or "").strip()
+    resolution = (request.form.get("resolution") or "").strip()
+
+    if not (pattern and meaning and resolution):
+        return _back_to_list(error="Error Pattern, Meaning, and Resolution are required.", edit_id=entry_id)
+
+    entry = KnowledgeService().update(entry_id, {
+        "pattern": pattern,
+        "meaning": meaning,
+        "resolution": resolution,
+        "assignment_group": (request.form.get("assignment_group") or "").strip(),
+    })
     if not entry:
-        return jsonify({"error": "Not found"}), 404
+        return _back_to_list(error="Entry not found.")
     _audit("update_knowledge", entry.pattern)
-    return jsonify({"message": "Updated"})
+    return _back_to_list(status="Entry updated.")
 
 
-@knowledge_bp.delete("/api/knowledge/<int:entry_id>")
-@login_required
+@knowledge_bp.post("/knowledge/<int:entry_id>/delete")
+@module_required("knowledge")
 def delete_knowledge(entry_id):
     if not KnowledgeService().delete(entry_id):
-        return jsonify({"error": "Not found"}), 404
+        return _back_to_list(error="Entry not found.")
     _audit("delete_knowledge", str(entry_id))
-    return jsonify({"message": "Deleted"})
+    return _back_to_list(status="Entry deleted.")
 
 
-@knowledge_bp.post("/api/knowledge/<int:entry_id>/activate")
-@login_required
+@knowledge_bp.post("/knowledge/<int:entry_id>/activate")
+@module_required("knowledge")
 def activate_knowledge(entry_id):
     entry = KnowledgeService().set_active(entry_id, True)
     if not entry:
-        return jsonify({"error": "Not found"}), 404
+        return _back_to_list(error="Entry not found.")
     _audit("activate_knowledge", str(entry_id))
-    return jsonify({"message": "Activated"})
+    return _back_to_list(status="Entry activated.")
 
 
-@knowledge_bp.post("/api/knowledge/<int:entry_id>/deactivate")
-@login_required
+@knowledge_bp.post("/knowledge/<int:entry_id>/deactivate")
+@module_required("knowledge")
 def deactivate_knowledge(entry_id):
     entry = KnowledgeService().set_active(entry_id, False)
     if not entry:
-        return jsonify({"error": "Not found"}), 404
+        return _back_to_list(error="Entry not found.")
     _audit("deactivate_knowledge", str(entry_id))
-    return jsonify({"message": "Deactivated"})
+    return _back_to_list(status="Entry deactivated.")

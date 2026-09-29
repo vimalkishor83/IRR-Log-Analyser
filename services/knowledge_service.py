@@ -6,9 +6,22 @@ from core.models import KnowledgeEntry
 
 class KnowledgeService:
 
-    def list_all(self):
-        """Return all knowledge entries, newest first."""
-        return KnowledgeEntry.query.order_by(KnowledgeEntry.id.desc()).all()
+    def list_all(self, status="all", search=""):
+        """Return knowledge entries, newest first, optionally filtered by status/search."""
+        query = KnowledgeEntry.query
+        if status == "active":
+            query = query.filter_by(active=True)
+        elif status == "inactive":
+            query = query.filter_by(active=False)
+        if search:
+            like = f"%{search}%"
+            query = query.filter(db.or_(
+                KnowledgeEntry.pattern.ilike(like),
+                KnowledgeEntry.meaning.ilike(like),
+                KnowledgeEntry.resolution.ilike(like),
+                KnowledgeEntry.assignment_group.ilike(like),
+            ))
+        return query.order_by(KnowledgeEntry.id.desc()).all()
 
     def add(self, data):
         """Create a new knowledge entry from a dict of field values."""

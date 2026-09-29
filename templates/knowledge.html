@@ -36,34 +36,6 @@
       .kb-add-header p  { margin: 0; font-size: .8rem; color: #64748b; }
       .kb-add-body { padding: 1.25rem 1.4rem 1.4rem; }
 
-      /* field error state */
-      .kb-field-error { border-color: #dc3545 !important; }
-      .kb-err-msg { font-size: .78rem; color: #dc3545; margin-top: .25rem; display: none; }
-      .kb-err-msg.show { display: block; }
-
-      /* char counter */
-      .char-count { font-size: .72rem; color: #94a3b8; text-align: right; margin-top: 2px; }
-
-      /* submit button loading state */
-      #addKnowledge .spinner-border { display: none; }
-      #addKnowledge.loading .btn-label { display: none; }
-      #addKnowledge.loading .spinner-border { display: inline-block; }
-
-      /* toast */
-      #kbToast {
-        position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999;
-        min-width: 260px;
-        background: #fff; border: 1px solid #e2e8f0;
-        border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.12);
-        padding: .85rem 1.1rem;
-        display: flex; align-items: center; gap: .65rem;
-        transform: translateY(120%); opacity: 0;
-        transition: transform .3s ease, opacity .3s ease;
-      }
-      #kbToast.show { transform: translateY(0); opacity: 1; }
-      #kbToast .toast-icon { font-size: 1.2rem; }
-      #kbToast .toast-msg  { font-size: .88rem; font-weight: 500; color: #1e293b; }
-
       /* repo section */
       .kb-repo-card {
         background: #fff;
@@ -112,6 +84,9 @@
 {% include 'nav.html' %}
 <main class="container p-4">
 
+  {% if status %}<div class="alert alert-success">{{ status }}</div>{% endif %}
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
   <!-- ── Add Knowledge card ── -->
   <div class="kb-add-card">
     <div class="kb-add-header">
@@ -121,7 +96,9 @@
         <p>Add known error patterns and proven fixes. The recommender uses these when no exact incident match is found.</p>
       </div>
     </div>
-    <div class="kb-add-body">
+    <form class="kb-add-body" method="post" action="{{ url_for('knowledge.add_knowledge') }}">
+      <input type="hidden" name="filter" value="{{ status_filter }}">
+      <input type="hidden" name="search" value="{{ search }}">
       <div class="row g-3">
 
         <!-- Error Pattern -->
@@ -129,11 +106,8 @@
           <label class="form-label fw-semibold" style="font-size:.85rem">
             <i class="bi bi-bug me-1 text-danger"></i>Error Pattern <span class="text-danger">*</span>
           </label>
-          <input id="pattern" class="form-control form-control-sm"
-                 placeholder="e.g. ORA-12541, NullPointerException"
-                 maxlength="120" oninput="clearErr('pattern'); updateChar('pattern',120)">
-          <div class="char-count"><span id="pattern-chars">0</span>/120</div>
-          <div class="kb-err-msg" id="err-pattern">Error Pattern is required.</div>
+          <input name="pattern" required class="form-control form-control-sm"
+                 placeholder="e.g. ORA-12541, NullPointerException" maxlength="120">
         </div>
 
         <!-- Meaning / Root Cause -->
@@ -141,11 +115,8 @@
           <label class="form-label fw-semibold" style="font-size:.85rem">
             <i class="bi bi-lightbulb me-1 text-warning"></i>Meaning / Root Cause <span class="text-danger">*</span>
           </label>
-          <input id="meaning" class="form-control form-control-sm"
-                 placeholder="Brief description of what this error means"
-                 maxlength="200" oninput="clearErr('meaning'); updateChar('meaning',200)">
-          <div class="char-count"><span id="meaning-chars">0</span>/200</div>
-          <div class="kb-err-msg" id="err-meaning">Meaning / Root Cause is required.</div>
+          <input name="meaning" required class="form-control form-control-sm"
+                 placeholder="Brief description of what this error means" maxlength="200">
         </div>
 
         <!-- Resolution -->
@@ -153,11 +124,8 @@
           <label class="form-label fw-semibold" style="font-size:.85rem">
             <i class="bi bi-tools me-1 text-success"></i>Resolution <span class="text-danger">*</span>
           </label>
-          <textarea id="resolution" class="form-control form-control-sm" rows="2"
-                    placeholder="Step-by-step fix or workaround…"
-                    maxlength="500" oninput="clearErr('resolution'); updateChar('resolution',500)"></textarea>
-          <div class="char-count"><span id="resolution-chars">0</span>/500</div>
-          <div class="kb-err-msg" id="err-resolution">Resolution is required.</div>
+          <textarea name="resolution" required class="form-control form-control-sm" rows="2"
+                    placeholder="Step-by-step fix or workaround…" maxlength="500"></textarea>
         </div>
 
         <!-- Assignment Group -->
@@ -165,9 +133,8 @@
           <label class="form-label fw-semibold" style="font-size:.85rem">
             <i class="bi bi-people me-1 text-secondary"></i>Group
           </label>
-          <input id="assignmentGroup" class="form-control form-control-sm"
+          <input name="assignment_group" class="form-control form-control-sm"
                  placeholder="e.g. DBA Team" maxlength="80">
-          <div class="char-count">&nbsp;</div>
           <div class="form-text" style="font-size:.72rem;margin-top:2px;">Optional</div>
         </div>
 
@@ -175,16 +142,12 @@
 
       <!-- Actions row -->
       <div class="d-flex align-items-center gap-3 mt-3">
-        <button id="addKnowledge" class="btn btn-primary btn-sm px-4">
-          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-          <span class="btn-label"><i class="bi bi-plus-circle me-1"></i>Add Entry</span>
-        </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetForm()">
-          <i class="bi bi-x-circle me-1"></i>Clear
+        <button class="btn btn-primary btn-sm px-4">
+          <i class="bi bi-plus-circle me-1"></i>Add Entry
         </button>
         <span class="text-danger" style="font-size:.75rem;">* Required fields</span>
       </div>
-    </div>
+    </form>
   </div>
 
   <!-- ── Repository card ── -->
@@ -194,40 +157,112 @@
         <h2 class="mb-0" style="font-size:1.1rem;font-weight:700;">
           <i class="bi bi-database me-2 text-primary"></i>Repository
         </h2>
-        <span class="kb-count-badge" id="repoCountBadge">0 entries</span>
+        <span class="kb-count-badge">{{ total_count }} entr{{ 'y' if total_count == 1 else 'ies' }}</span>
         <!-- Active / Inactive filter -->
         <div class="btn-group btn-group-sm" role="group">
-          <button id="filterAll"      class="btn btn-outline-secondary active" onclick="setFilter('all')">All</button>
-          <button id="filterActive"   class="btn btn-outline-success"          onclick="setFilter('active')">Active</button>
-          <button id="filterInactive" class="btn btn-outline-secondary"        onclick="setFilter('inactive')">Inactive</button>
+          <a class="btn btn-outline-secondary {{ 'active' if status_filter == 'all' }}"
+             href="{{ url_for('knowledge.knowledge_page', filter='all', search=search) }}">All</a>
+          <a class="btn btn-outline-success {{ 'active' if status_filter == 'active' }}"
+             href="{{ url_for('knowledge.knowledge_page', filter='active', search=search) }}">Active</a>
+          <a class="btn btn-outline-secondary {{ 'active' if status_filter == 'inactive' }}"
+             href="{{ url_for('knowledge.knowledge_page', filter='inactive', search=search) }}">Inactive</a>
         </div>
         <!-- Text search -->
-        <div class="input-group input-group-sm" style="width:220px;">
+        <form class="input-group input-group-sm" style="width:220px;" method="get" action="{{ url_for('knowledge.knowledge_page') }}">
+          <input type="hidden" name="filter" value="{{ status_filter }}">
           <span class="input-group-text"><i class="bi bi-search"></i></span>
-          <input id="knowledgeSearch" type="text" class="form-control" placeholder="Search…" oninput="renderFiltered()">
-          <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()" title="Clear">&#x2715;</button>
-        </div>
-      </div>
-      <!-- Bulk actions -->
-      <div id="bulkToolbar" class="d-flex align-items-center gap-2" style="display:none;">
-        <span id="selectionCount" class="text-secondary small"></span>
-        <button class="btn btn-sm btn-outline-success"  onclick="bulkAction('activate')">Activate</button>
-        <button class="btn btn-sm btn-outline-warning"  onclick="bulkAction('deactivate')">Deactivate</button>
-        <button class="btn btn-sm btn-outline-danger"   onclick="bulkAction('delete')">Delete</button>
+          <input name="search" type="text" class="form-control" placeholder="Search…" value="{{ search }}">
+          {% if search %}
+          <a class="btn btn-outline-secondary" href="{{ url_for('knowledge.knowledge_page', filter=status_filter) }}" title="Clear">&#x2715;</a>
+          {% endif %}
+        </form>
       </div>
     </div>
-    <div id="knowledgeRows"></div>
+
+    <div>
+      {% if not entries %}
+      <p class="text-secondary py-3 text-center">
+        {% if search %}No entries match "<strong>{{ search }}</strong>".
+        {% elif status_filter == 'all' %}No knowledge entries yet. Add one above.
+        {% else %}No {{ status_filter }} entries.
+        {% endif %}
+      </p>
+      {% endif %}
+
+      {% for row in entries %}
+      <div class="kb-row{{ '' if row.active else ' inactive-row' }}">
+        <div class="d-flex align-items-start gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <span class="kb-pattern">{{ row.pattern }}</span>
+              {% if row.active %}
+              <span class="badge text-bg-success" style="font-size:.7rem">Active</span>
+              {% else %}
+              <span class="badge text-bg-secondary" style="font-size:.7rem">Inactive</span>
+              {% endif %}
+              {% if row.assignment_group %}
+              <span class="kb-group-tag ms-1"><i class="bi bi-people me-1"></i>{{ row.assignment_group }}</span>
+              {% endif %}
+            </div>
+            <div class="kb-meaning"><i class="bi bi-lightbulb me-1 text-warning"></i>{{ row.meaning }}</div>
+            <div class="kb-resolution mt-1"><strong><i class="bi bi-tools me-1"></i>Fix:</strong> {{ row.resolution }}</div>
+          </div>
+          <div class="d-flex gap-1 flex-shrink-0 flex-wrap">
+            <form method="post" action="{{ url_for('knowledge.deactivate_knowledge' if row.active else 'knowledge.activate_knowledge', entry_id=row.id) }}">
+              <input type="hidden" name="filter" value="{{ status_filter }}">
+              <input type="hidden" name="search" value="{{ search }}">
+              {% if row.active %}
+              <button class="btn btn-sm btn-outline-warning" style="font-size:.75rem;padding:.2rem .6rem"><i class="bi bi-pause-circle me-1"></i>Deactivate</button>
+              {% else %}
+              <button class="btn btn-sm btn-outline-success" style="font-size:.75rem;padding:.2rem .6rem"><i class="bi bi-play-circle me-1"></i>Activate</button>
+              {% endif %}
+            </form>
+            <a class="btn btn-sm btn-outline-primary" style="font-size:.75rem;padding:.2rem .6rem"
+               href="{{ url_for('knowledge.knowledge_page', filter=status_filter, search=search, edit=row.id) }}">
+              <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+            <form method="post" action="{{ url_for('knowledge.delete_knowledge', entry_id=row.id) }}"
+                  onsubmit="return confirm('Permanently delete this entry? This cannot be undone.');">
+              <input type="hidden" name="filter" value="{{ status_filter }}">
+              <input type="hidden" name="search" value="{{ search }}">
+              <button class="btn btn-sm btn-outline-danger" style="font-size:.75rem;padding:.2rem .6rem"><i class="bi bi-trash me-1"></i>Delete</button>
+            </form>
+          </div>
+        </div>
+
+        {% if edit_id == row.id %}
+        <form class="kb-edit-form" method="post" action="{{ url_for('knowledge.update_knowledge', entry_id=row.id) }}">
+          <input type="hidden" name="filter" value="{{ status_filter }}">
+          <input type="hidden" name="search" value="{{ search }}">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Error Pattern</label>
+              <input name="pattern" required class="form-control form-control-sm" value="{{ row.pattern }}" maxlength="120">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Meaning / Root Cause</label>
+              <input name="meaning" required class="form-control form-control-sm" value="{{ row.meaning }}" maxlength="200">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Resolution</label>
+              <textarea name="resolution" required class="form-control form-control-sm" rows="2" maxlength="500">{{ row.resolution }}</textarea>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-semibold">Group</label>
+              <input name="assignment_group" class="form-control form-control-sm" value="{{ row.assignment_group or '' }}" maxlength="80">
+            </div>
+          </div>
+          <div class="mt-2 d-flex gap-2">
+            <button class="btn btn-sm btn-primary"><i class="bi bi-check2 me-1"></i>Save</button>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('knowledge.knowledge_page', filter=status_filter, search=search) }}">Cancel</a>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
   </div>
 
 </main>
-
-<!-- Toast notification -->
-<div id="kbToast">
-  <span class="toast-icon" id="toastIcon"></span>
-  <span class="toast-msg"  id="toastMsg"></span>
-</div>
-
-<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/knowledge.js') }}"></script>
 </body>
 </html>
