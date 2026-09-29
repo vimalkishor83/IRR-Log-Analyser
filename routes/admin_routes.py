@@ -1,9 +1,10 @@
 """Admin panel routes: user management, sync controls, audit log."""
 
 import csv
+import io
 import logging
 
-from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
 
 from core.auth import ALL_MODULES, MODULE_LABELS, login_required, role_required
@@ -22,7 +23,13 @@ def _audit(action, details=""):
 @admin_bp.get("/admin")
 @role_required("Admin")
 def admin_page():
-    return render_template("admin.html")
+    return render_template(
+        "admin.html",
+        system_status=_status_data(),
+        snow_groups=ServiceNowGroup.query.order_by(ServiceNowGroup.name).all(),
+        message=request.args.get("message"),
+        error=request.args.get("error"),
+    )
 
 
 @admin_bp.get("/admin/users")
@@ -116,10 +123,9 @@ def delete_user(user_id):
     return redirect(url_for("admin.users_page", status=f"User '{user.username}' deleted."))
 
 
-@admin_bp.post("/api/admin/sync")
-@admin_bp.post("/api/admin/sync-now")  # alias used by the admin JS
+@admin_bp.post("/admin/sync")
 @role_required("Admin")
-def trigger_sync():
+def sync_now():
     try:
         from flask import current_app
         from services.sync_service import SyncService
@@ -128,70 +134,74 @@ def trigger_sync():
         svc.sync_kb_articles()
         count = _rebuild_index()
         _audit("manual_sync", f"Sync complete — {count} documents indexed")
-        return jsonify({"message": f"Sync complete. Index rebuilt with {count} documents."})
+        return redirect(url_for("admin.admin_page", message=f"Sync complete. Index rebuilt with {count} documents."))
     except Exception as err:
         log.error("Manual sync failed: %s", err)
-        return jsonify({"error": str(err)}), 500
+        return redirect(url_for("admin.admin_page", error=f"Sync failed: {err}"))
 
 
-@admin_bp.post("/api/admin/retrain")
+@admin_bp.post("/admin/retrain")
 @role_required("Admin")
-def retrain():
+def retrain_now():
     """Rebuild the TF-IDF search index without syncing from ServiceNow."""
     count = _rebuild_index()
     _audit("retrain", f"{count} documents indexed")
-    return jsonify({"message": f"Index rebuilt with {count} documents."})
+    return redirect(url_for("admin.admin_page", message=f"Index rebuilt with {count} documents."))
 
 
-@admin_bp.post("/api/admin/import-csv")
+@admin_bp.post("/admin/import-csv")
 @role_required("Admin")
-def import_csv():
+def import_csv_now():
     """Bulk-import incidents from an uploaded CSV file (read in memory, no disk write)."""
     uploaded = request.files.get("file")
-    if not uploaded:
-        return jsonify({"error": "No file uploaded."}), 400
+    if not uploaded or not uploaded.filename:
+        return redirect(url_for("admin.admin_page", error="Please choose a CSV file first."))
 
     raw_bytes = uploaded.read()
     imported, skipped = _import_incidents_csv(raw_bytes)
     count = _rebuild_index()
     _audit("import_csv", f"Imported {imported}, skipped {skipped}")
-    return jsonify({
-        "message": f"Import done: {imported} added, {skipped} skipped. Index rebuilt with {count} documents."
-    })
+    return redirect(url_for(
+        "admin.admin_page",
+        message=f"Import done: {imported} added, {skipped} skipped. Index rebuilt with {count} documents.",
+    ))
+
+
+@admin_bp.get("/admin/import-template")
+@role_required("Admin")
+def download_import_template():
+    """Download a sample CSV showing the expected columns for incident import."""
+    headers = [
+        "incident_number", "application", "server", "environment",
+        "error_description", "exception_message", "root_cause",
+        "resolution", "assignment_group", "status",
+    ]
+    examples = [
+        ["INC0001001", "OrderService", "app-server-01", "Production",
+         "ORA-12541: TNS no listener", "java.sql.SQLException: Listener refused connection",
+         "Database listener was not running on port 1521",
+         "Started DB listener using: lsnrctl start. Verified connectivity.",
+         "DBA Team", "Resolved"],
+        ["INC0001002", "PaymentService", "app-server-02", "Production",
+         "Connection refused to 10.0.0.5:8080", "java.net.ConnectException: Connection refused",
+         "Target microservice was down after deployment",
+         "Restarted PaymentService pod. Added health-check to deployment pipeline.",
+         "Application Support", "Resolved"],
+    ]
+    output = io.StringIO()
+    csv.writer(output).writerows([headers, *examples])
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=incident_import_template.csv"},
+    )
 
 
 @admin_bp.get("/api/admin/status")
 @login_required
 def status():
     """Return system status for the Index Status panel."""
-    from flask import current_app
-    from services import tfidf_engine
-
-    def last_sync(source):
-        record = SyncHistory.query.filter_by(source=source).order_by(SyncHistory.last_sync_time.desc()).first()
-        if not record:
-            return None
-        return {
-            "time":    record.last_sync_time.strftime("%Y-%m-%d %H:%M:%S") if record.last_sync_time else "",
-            "status":  record.status,
-            "message": record.message,
-        }
-
-    cfg = current_app.config
-    snow_ok = bool(cfg.get("SERVICENOW_URL") and cfg.get("SERVICENOW_USERNAME") and cfg.get("SERVICENOW_PASSWORD"))
-
-    from core.models import KnowledgeEntry
-    return jsonify({
-        "tfidf_trained":       tfidf_engine.is_trained(),
-        "tfidf_documents":     tfidf_engine.document_count(),
-        "incident_count":      Incident.query.count(),
-        "kb_count":            KBArticle.query.filter_by(active=True).count(),
-        "knowledge_count":     KnowledgeEntry.query.filter_by(active=True).count(),
-        "snow_configured":     snow_ok,
-        "snow_url":            cfg.get("SERVICENOW_URL", ""),
-        "last_sync_incidents": last_sync("servicenow_incidents"),
-        "last_sync_kb":        last_sync("servicenow_kb"),
-    })
+    return jsonify(_status_data())
 
 
 @admin_bp.get("/api/admin/sync-history")
@@ -218,51 +228,38 @@ def audit_log():
     } for r in rows])
 
 
-@admin_bp.get("/api/admin/snow-groups")
+@admin_bp.post("/admin/snow-groups/add")
 @role_required("Admin")
-def list_snow_groups():
-    rows = ServiceNowGroup.query.order_by(ServiceNowGroup.name).all()
-    return jsonify([{"id": r.id, "name": r.name, "active": r.active} for r in rows])
-
-
-@admin_bp.post("/api/admin/snow-groups")
-@role_required("Admin")
-def create_snow_group():
-    data = request.get_json(silent=True) or {}
-    name = (data.get("name") or "").strip()
+def add_snow_group():
+    name = (request.form.get("name") or "").strip()
     if not name:
-        return jsonify({"error": "Group name is required"}), 400
+        return redirect(url_for("admin.admin_page", error="Group name is required."))
     if ServiceNowGroup.query.filter_by(name=name).first():
-        return jsonify({"error": "Group already exists"}), 400
-    group = ServiceNowGroup(name=name)
-    db.session.add(group)
+        return redirect(url_for("admin.admin_page", error="Group already exists."))
+    db.session.add(ServiceNowGroup(name=name))
     db.session.commit()
     _audit("create_snow_group", name)
-    return jsonify({"id": group.id, "name": group.name, "active": group.active}), 201
+    return redirect(url_for("admin.admin_page", message=f"Group '{name}' added."))
 
 
-@admin_bp.put("/api/admin/snow-groups/<int:group_id>")
+@admin_bp.post("/admin/snow-groups/<int:group_id>/toggle")
 @role_required("Admin")
-def update_snow_group(group_id):
+def toggle_snow_group(group_id):
     group = ServiceNowGroup.query.get_or_404(group_id)
-    data  = request.get_json(silent=True) or {}
-    if "name" in data:
-        group.name = data["name"].strip()
-    if "active" in data:
-        group.active = bool(data["active"])
+    group.active = not group.active
     db.session.commit()
     _audit("update_snow_group", group.name)
-    return jsonify({"id": group.id, "name": group.name, "active": group.active})
+    return redirect(url_for("admin.admin_page"))
 
 
-@admin_bp.delete("/api/admin/snow-groups/<int:group_id>")
+@admin_bp.post("/admin/snow-groups/<int:group_id>/delete")
 @role_required("Admin")
 def delete_snow_group(group_id):
     group = ServiceNowGroup.query.get_or_404(group_id)
     db.session.delete(group)
     db.session.commit()
     _audit("delete_snow_group", group.name)
-    return jsonify({"message": "Group deleted"})
+    return redirect(url_for("admin.admin_page", message="Group deleted."))
 
 
 @admin_bp.get("/api/admin/stats")
@@ -273,6 +270,38 @@ def stats():
         "total_kb_articles": KBArticle.query.count(),
         "total_users":       User.query.count(),
     })
+
+
+def _status_data():
+    """Build the system-status dict shown on the admin page and index status panel."""
+    from flask import current_app
+    from services import tfidf_engine
+    from core.models import KnowledgeEntry
+
+    def last_sync(source):
+        record = SyncHistory.query.filter_by(source=source).order_by(SyncHistory.last_sync_time.desc()).first()
+        if not record:
+            return None
+        return {
+            "time":    record.last_sync_time.strftime("%Y-%m-%d %H:%M:%S") if record.last_sync_time else "",
+            "status":  record.status,
+            "message": record.message,
+        }
+
+    cfg = current_app.config
+    snow_ok = bool(cfg.get("SERVICENOW_URL") and cfg.get("SERVICENOW_USERNAME") and cfg.get("SERVICENOW_PASSWORD"))
+
+    return {
+        "tfidf_trained":       tfidf_engine.is_trained(),
+        "tfidf_documents":     tfidf_engine.document_count(),
+        "incident_count":      Incident.query.count(),
+        "kb_count":            KBArticle.query.filter_by(active=True).count(),
+        "knowledge_count":     KnowledgeEntry.query.filter_by(active=True).count(),
+        "snow_configured":     snow_ok,
+        "snow_url":            cfg.get("SERVICENOW_URL", ""),
+        "last_sync_incidents": last_sync("servicenow_incidents"),
+        "last_sync_kb":        last_sync("servicenow_kb"),
+    }
 
 
 def _modules_str(role, selected_modules):
@@ -299,7 +328,6 @@ def _import_incidents_csv(raw_bytes):
     Returns (imported_count, skipped_count).
     Nothing is written to disk.
     """
-    import io
     allowed_fields = {
         "incident_number", "application", "server", "environment",
         "error_description", "exception_message", "root_cause",
