@@ -1,0 +1,15 @@
+<form method="post" action="{{ url_for('recommendations.submit_feedback') }}" class="d-flex align-items-center gap-2 flex-wrap">
+  <input type="hidden" name="q" value="{{ query_text }}">
+  <input type="hidden" name="incident" value="{{ incident_number }}">
+  <input type="hidden" name="sort" value="{{ sort_by }}">
+  <input type="hidden" name="incident_number" value="{{ item.incident_number }}">
+  <input type="hidden" name="result_index" value="{{ loop.index0 }}">
+  <span class="small text-muted me-1">Was this helpful?</span>
+  <button name="value" value="Helpful" class="btn btn-sm btn-outline-success feedback-btn">
+    <i class="bi bi-hand-thumbs-up me-1"></i>Helpful
+  </button>
+  <button name="value" value="Partially Helpful" class="btn btn-sm btn-outline-warning feedback-btn">Partially Helpful</button>
+  <button name="value" value="Not Helpful" class="btn btn-sm btn-outline-danger feedback-btn">
+    <i class="bi bi-hand-thumbs-down me-1"></i>Not Helpful
+  </button>
+</form>

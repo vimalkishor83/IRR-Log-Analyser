@@ -1,8 +1,8 @@
-"""Recommendations page + its search and feedback API endpoints."""
+"""Recommendations page + its search and feedback routes."""
 
 import logging
 
-from flask import Blueprint, jsonify, render_template, request, session
+from flask import Blueprint, redirect, render_template, request, session, url_for
 
 from core.auth import login_required, module_required
 from core.database import db
@@ -14,26 +14,20 @@ log = logging.getLogger(__name__)
 rec_bp = Blueprint("recommendations", __name__)
 
 
-@rec_bp.get("/recommendations")
-@module_required("recommendations")
-def recommendations_page():
-    return render_template("recommendations.html")
-
-
 def _audit(action, details=""):
     db.session.add(AuditLog(username=session.get("username", "system"), action=action, details=details))
     db.session.commit()
 
 
-@rec_bp.post("/api/recommend")
-@login_required
-def recommend():
-    payload         = request.get_json(silent=True) or {}
-    query_text      = payload.get("query_text", "").strip()
-    incident_number = payload.get("incident_number", "").strip()
+@rec_bp.get("/recommendations")
+@module_required("recommendations")
+def recommendations_page():
+    query_text      = request.args.get("q", "").strip()
+    incident_number = request.args.get("incident", "").strip()
+    sort_by         = request.args.get("sort", "confidence")
 
     if not query_text and not incident_number:
-        return jsonify({"error": "Enter an incident number or error text."}), 400
+        return render_template("recommendations.html", searched=False)
 
     live_incident = None  # details about an open/in-progress incident from SNOW
 
@@ -63,20 +57,37 @@ def recommend():
 
     engine  = RecommendationEngine()
     results = engine.search(query_text or incident_number, incident_number)
+    if sort_by in ("confidence", "similarity"):
+        results = sorted(results, key=lambda r: r[sort_by], reverse=True)
 
     _audit("recommendation_search", incident_number or query_text)
-    return jsonify({"items": results, "live_incident": live_incident})
+    return render_template(
+        "recommendations.html",
+        searched=True,
+        query_text=query_text,
+        incident_number=incident_number,
+        sort_by=sort_by,
+        items=results,
+        live_incident=live_incident,
+        feedback_saved=request.args.get("feedback_saved", type=int),
+    )
 
 
-@rec_bp.post("/api/feedback")
+@rec_bp.post("/recommendations/feedback")
 @login_required
-def feedback():
-    payload = request.get_json(silent=True) or {}
-    db.session.add(Feedback(
-        recommendation_id = payload.get("recommendation_id"),
-        value             = payload.get("value"),
-        comments          = payload.get("comments", ""),
-    ))
+def submit_feedback():
+    value           = request.form.get("value", "")
+    incident_number = request.form.get("incident_number", "")
+    result_index    = request.form.get("result_index", type=int)
+
+    db.session.add(Feedback(value=value, comments=incident_number))
     db.session.commit()
-    _audit("feedback", payload.get("value", ""))
-    return jsonify({"message": "Feedback saved"})
+    _audit("feedback", value)
+
+    return redirect(url_for(
+        "recommendations.recommendations_page",
+        q=request.form.get("q", ""),
+        incident=request.form.get("incident", ""),
+        sort=request.form.get("sort", "confidence"),
+        feedback_saved=result_index,
+    ))

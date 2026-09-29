@@ -10,7 +10,7 @@
   <style>
     body { background: #f0f2f5; }
 
-    /* â”€â”€ Search bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Search bar */
     .search-card {
       background: #fff;
       border-radius: 12px;
@@ -18,7 +18,7 @@
       padding: 1.5rem 1.75rem;
     }
 
-    /* â”€â”€ Top-match hero card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Top-match hero card */
     .top-match-card {
       border-radius: 14px;
       border: 2px solid #2563eb;
@@ -34,17 +34,15 @@
       letter-spacing: .04em;
     }
 
-    /* â”€â”€ Other result cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Other result cards */
     .rec-card {
       background: #fff;
       border-radius: 12px;
       border: 1px solid #e2e8f0;
       box-shadow: 0 1px 6px rgba(0,0,0,.06);
-      transition: box-shadow .15s, transform .15s;
     }
-    .rec-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-1px); }
 
-    /* â”€â”€ Confidence ring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Confidence ring */
     .conf-ring {
       width: 72px; height: 72px;
       border-radius: 50%;
@@ -71,7 +69,7 @@
     .conf-pill.mid  { background:#fef9c3; color:#a16207; }
     .conf-pill.low  { background:#fee2e2; color:#b91c1c; }
 
-    /* â”€â”€ Meta chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Meta chips */
     .meta-chip {
       display: inline-flex; align-items: center; gap: .3rem;
       background: #f1f5f9; border-radius: 20px;
@@ -79,7 +77,7 @@
       color: #475569;
     }
 
-    /* â”€â”€ Resolution block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Resolution block */
     .resolution-block {
       background: #f8fafc;
       border-left: 4px solid #2563eb;
@@ -98,25 +96,21 @@
       white-space: pre-wrap;
     }
 
-    /* â”€â”€ Feedback buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-    .feedback-btn { border-radius: 20px; font-size: .8rem; transition: all .15s; }
-    .feedback-btn.selected-helpful       { background:#16a34a; color:#fff; border-color:#16a34a; }
-    .feedback-btn.selected-partial       { background:#ca8a04; color:#fff; border-color:#ca8a04; }
-    .feedback-btn.selected-nothelpful    { background:#dc2626; color:#fff; border-color:#dc2626; }
+    /* Feedback buttons */
+    .feedback-btn { border-radius: 20px; font-size: .8rem; }
+    .feedback-btn.selected-helpful    { background:#16a34a; color:#fff; border-color:#16a34a; }
+    .feedback-btn.selected-partial    { background:#ca8a04; color:#fff; border-color:#ca8a04; }
+    .feedback-btn.selected-nothelpful { background:#dc2626; color:#fff; border-color:#dc2626; }
 
-    /* â”€â”€ Similarity bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Similarity bar */
     .sim-bar-wrap { background:#e2e8f0; border-radius:4px; height:6px; overflow:hidden; }
-    .sim-bar      { height:100%; border-radius:4px; transition: width .4s; }
+    .sim-bar      { height:100%; border-radius:4px; }
 
-    /* â”€â”€ Skeleton loader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-    .skeleton { background: linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%); background-size:400% 100%; animation:shimmer 1.4s infinite; border-radius:6px; }
-    @keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:0% 50%} }
-
-    /* â”€â”€ Source badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Source badge */
     .src-incident { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
     .src-kb       { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
 
-    /* â”€â”€ Live incident banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Live incident banner */
     .live-inc-banner {
       background: linear-gradient(135deg, #fffbeb, #fef3c7);
       border: 1.5px solid #fcd34d;
@@ -147,7 +141,7 @@
     .state-open        { background:#fce7f3; color:#9d174d; }
     .state-other       { background:#f1f5f9; color:#475569; }
 
-    /* â”€â”€ Idle state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* Idle state */
     .idle-section-label {
       font-size: .78rem;
       font-weight: 600;
@@ -178,6 +172,13 @@
       flex-shrink: 0;
     }
 
+    /* Collapsible detail (native <details>, no JS) */
+    details.detail-toggle summary { cursor: pointer; list-style: none; }
+    details.detail-toggle summary::-webkit-details-marker { display: none; }
+    details.detail-toggle summary .bi-chevron-down { display: inline-block; }
+    details.detail-toggle[open] summary .bi-chevron-down { display: none; }
+    details.detail-toggle summary .bi-chevron-up { display: none; }
+    details.detail-toggle[open] summary .bi-chevron-up { display: inline-block; }
   </style>
 </head>
 <body>
@@ -185,82 +186,216 @@
 
 <main class="container-fluid px-4 py-4" style="max-width:1100px">
 
-  <!-- â”€â”€ Search bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- Search bar -->
   <div class="search-card mb-4">
     <div class="d-flex align-items-center gap-2 mb-3">
       <i class="bi bi-search text-primary fs-5"></i>
       <h5 class="mb-0 fw-semibold">Intelligent Resolution Recommender</h5>
-      <span class="ms-auto text-muted small" id="indexStatus"></span>
     </div>
-    <div class="row g-2 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label small mb-1 text-muted">Incident Number <span class="text-muted fw-normal">(optional)</span></label>
-        <input id="incidentNumber" class="form-control" placeholder="e.g. INC0001234">
+    <form method="get" action="{{ url_for('recommendations.recommendations_page') }}">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small mb-1 text-muted">Incident Number <span class="text-muted fw-normal">(optional)</span></label>
+          <input name="incident" class="form-control" placeholder="e.g. INC0001234" value="{{ incident_number or '' }}">
+        </div>
+        <div class="col-md-7">
+          <label class="form-label small mb-1 text-muted">Error / Exception / Log Message</label>
+          <input name="q" class="form-control" placeholder="Paste error message, exception, or description…" value="{{ query_text or '' }}">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-search"></i> Search
+          </button>
+        </div>
       </div>
-      <div class="col-md-7">
-        <label class="form-label small mb-1 text-muted">Error / Exception / Log Message</label>
-        <input id="queryText" class="form-control" placeholder="Paste error message, exception, or description…">
-      </div>
-      <div class="col-md-2">
-        <button id="searchBtn" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
-          <i class="bi bi-search"></i> Search
-        </button>
-      </div>
-    </div>
-    <!-- Quick-tip chips -->
-    <div class="mt-2 d-flex flex-wrap gap-2" id="quickChips" style="display:none!important"></div>
+    </form>
   </div>
 
-  <!-- â”€â”€ Live incident banner (shown when SNOW returns an open/in-progress incident) -->
-  <div id="liveIncidentBanner" style="display:none" class="live-inc-banner mb-3"></div>
-
-  <!-- â”€â”€ Results area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
-  <div id="resultsArea"></div>
-
-  <!-- â”€â”€ Idle state (shown before any search) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
-  <div id="idleState">
-
-    <!-- How it works -->
-    <div class="row g-3 mb-3">
-      <div class="col-12">
-        <div class="idle-section-label"><i class="bi bi-info-circle me-1"></i>How it works</div>
-      </div>
-      <div class="col-md-4">
-        <div class="idle-step">
-          <div class="idle-step-num">1</div>
-          <div>
-            <div class="fw-semibold small mb-1">Paste your error</div>
-            <div class="text-muted" style="font-size:.8rem">Copy the exception, error code, or log message from your system and paste it in the search box above.</div>
-          </div>
+  {% if not searched %}
+  <!-- Idle state (shown before any search) -->
+  <div class="row g-3 mb-3">
+    <div class="col-12">
+      <div class="idle-section-label"><i class="bi bi-info-circle me-1"></i>How it works</div>
+    </div>
+    <div class="col-md-4">
+      <div class="idle-step">
+        <div class="idle-step-num">1</div>
+        <div>
+          <div class="fw-semibold small mb-1">Paste your error</div>
+          <div class="text-muted" style="font-size:.8rem">Copy the exception, error code, or log message from your system and paste it in the search box above.</div>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="idle-step">
-          <div class="idle-step-num">2</div>
-          <div>
-            <div class="fw-semibold small mb-1">AI matches incidents</div>
-            <div class="text-muted" style="font-size:.8rem">The engine searches past incidents and KB articles using TF-IDF similarity to find the closest matches.</div>
-          </div>
+    </div>
+    <div class="col-md-4">
+      <div class="idle-step">
+        <div class="idle-step-num">2</div>
+        <div>
+          <div class="fw-semibold small mb-1">AI matches incidents</div>
+          <div class="text-muted" style="font-size:.8rem">The engine searches past incidents and KB articles using TF-IDF similarity to find the closest matches.</div>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="idle-step">
-          <div class="idle-step-num">3</div>
-          <div>
-            <div class="fw-semibold small mb-1">Apply the resolution</div>
-            <div class="text-muted" style="font-size:.8rem">Review root cause and resolution steps ranked by confidence. Mark feedback to improve future results.</div>
-          </div>
+    </div>
+    <div class="col-md-4">
+      <div class="idle-step">
+        <div class="idle-step-num">3</div>
+        <div>
+          <div class="fw-semibold small mb-1">Apply the resolution</div>
+          <div class="text-muted" style="font-size:.8rem">Review root cause and resolution steps ranked by confidence. Mark feedback to improve future results.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+
+  {% if live_incident %}
+  {% set state = (live_incident.state or '').lower() %}
+  {% set state_cls = 'state-in-progress' if 'progress' in state else ('state-new' if state == 'new' else ('state-open' if state == 'open' else 'state-other')) %}
+  <div class="live-inc-banner mb-3">
+    <div class="live-inc-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="flex-fill">
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+        <span class="fw-bold" style="font-size:.9rem">{{ live_incident.number }}</span>
+        <span class="live-inc-state {{ state_cls }}">
+          <i class="bi bi-circle-fill" style="font-size:.45rem"></i>{{ live_incident.state }}
+        </span>
+        {% if live_incident.priority %}<span class="meta-chip ms-1"><i class="bi bi-flag"></i>P{{ live_incident.priority }}</span>{% endif %}
+        {% if live_incident.group %}<span class="meta-chip ms-1"><i class="bi bi-people"></i>{{ live_incident.group }}</span>{% endif %}
+      </div>
+      <div style="font-size:.83rem;color:#78350f">{{ live_incident.description or "No description available" }}</div>
+      <div class="mt-1" style="font-size:.75rem;color:#92400e">
+        <i class="bi bi-info-circle me-1"></i>This incident is not yet resolved — recommendations below are based on its description matched against past resolved incidents and KB articles.
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if feedback_saved is not none %}
+  <div class="alert alert-success py-2 small"><i class="bi bi-check-circle-fill me-1"></i>Thanks for your feedback!</div>
+  {% endif %}
+
+  {% if not items %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+    <p>No recommendations found. Try a different error description or load more incidents via Admin → Sync Now.</p>
+  </div>
+  {% else %}
+
+  <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('recommendations.recommendations_page') }}" style="font-size:.78rem">
+      <i class="bi bi-arrow-left me-1"></i>New Search
+    </a>
+    <span class="text-muted small"><i class="bi bi-list-check me-1"></i><strong>{{ items|length }}</strong> result{{ 's' if items|length != 1 }} found</span>
+    <span class="text-muted small ms-2">&middot;</span>
+    {% set top_conf = items[0].confidence %}
+    <span class="text-muted small ms-2">Best match:
+      <strong>{{ 'High' if top_conf >= 70 else ('Medium' if top_conf >= 40 else 'Low') }}</strong> confidence
+    </span>
+    <form method="get" action="{{ url_for('recommendations.recommendations_page') }}" class="ms-auto">
+      <input type="hidden" name="q" value="{{ query_text }}">
+      <input type="hidden" name="incident" value="{{ incident_number }}">
+      <select name="sort" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+        <option value="confidence" {{ 'selected' if sort_by == 'confidence' }}>Sort: Confidence</option>
+        <option value="similarity" {{ 'selected' if sort_by == 'similarity' }}>Sort: Similarity</option>
+      </select>
+    </form>
+  </div>
+
+  {% for item in items %}
+  {% set is_top = loop.first %}
+  {% set conf_cls = 'conf-high' if item.confidence >= 70 else ('conf-mid' if item.confidence >= 40 else 'conf-low') %}
+  {% set pill_cls = 'high' if item.confidence >= 70 else ('mid' if item.confidence >= 40 else 'low') %}
+  {% set sim_color = '#16a34a' if item.similarity >= 70 else ('#ca8a04' if item.similarity >= 40 else '#dc2626') %}
+  {% set src_cls = 'src-kb' if 'kb' in (item.source or '').lower() else 'src-incident' %}
+
+  {% if is_top %}
+  <div class="top-match-card p-4 mb-3">
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <div class="conf-ring {{ conf_cls }}" title="Confidence score">{{ item.confidence }}%</div>
+      <div class="flex-fill">
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+          <span class="top-match-badge"><i class="bi bi-trophy-fill me-1"></i>Top Match</span>
+          <span class="badge {{ src_cls }} rounded-pill">{{ item.source }}</span>
+          <span class="fw-semibold">{{ item.incident_number }}</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="meta-chip"><i class="bi bi-bar-chart-fill text-primary"></i>Similarity {{ item.similarity }}%</span>
+          <span class="meta-chip"><i class="bi bi-check-circle-fill text-success"></i>{{ item.success_count }} resolved</span>
+          <span class="meta-chip"><i class="bi bi-people text-secondary"></i>{{ item.assignment_group }}</span>
+          <span class="meta-chip text-muted">{{ item.reason }}</span>
         </div>
       </div>
     </div>
 
-  </div><!-- end #idleState -->
+    <div class="mb-3">
+      <div class="d-flex justify-content-between small text-muted mb-1">
+        <span>Similarity Match</span><span>{{ item.similarity }}%</span>
+      </div>
+      <div class="sim-bar-wrap">
+        <div class="sim-bar" style="width:{{ item.similarity }}%;background:{{ sim_color }}"></div>
+      </div>
+    </div>
+
+    {% if item.root_cause %}
+    <div class="mb-3">
+      <div class="small fw-semibold text-muted mb-1"><i class="bi bi-exclamation-triangle text-warning me-1"></i>Root Cause</div>
+      <div class="root-cause-block">{{ item.root_cause }}</div>
+    </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <div class="small fw-semibold text-muted mb-1"><i class="bi bi-tools text-primary me-1"></i>Resolution Steps</div>
+      <div class="resolution-block">{{ item.resolution }}</div>
+    </div>
+
+    {% include 'recommendation_feedback.html' %}
+  </div>
+
+  {% else %}
+  <div class="rec-card p-3 mb-3">
+    <div class="d-flex align-items-start gap-3">
+      <span class="conf-pill {{ pill_cls }} mt-1">{{ item.confidence }}%</span>
+      <div class="flex-fill">
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+          <span class="badge {{ src_cls }} rounded-pill">{{ item.source }}</span>
+          <span class="fw-semibold">{{ item.incident_number }}</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="meta-chip"><i class="bi bi-bar-chart-fill text-primary"></i>{{ item.similarity }}% sim</span>
+          <span class="meta-chip"><i class="bi bi-check-circle-fill text-success"></i>{{ item.success_count }} resolved</span>
+          <span class="meta-chip"><i class="bi bi-people text-secondary"></i>{{ item.assignment_group }}</span>
+        </div>
+        <div class="sim-bar-wrap mb-2">
+          <div class="sim-bar" style="width:{{ item.similarity }}%;background:{{ sim_color }}"></div>
+        </div>
+
+        <details class="detail-toggle">
+          <summary class="btn btn-sm btn-link p-0 text-muted">
+            <i class="bi bi-chevron-down"></i><i class="bi bi-chevron-up"></i> Details
+          </summary>
+          <div style="margin-top:.75rem">
+            {% if item.root_cause %}
+            <div class="mb-2">
+              <div class="small fw-semibold text-muted mb-1"><i class="bi bi-exclamation-triangle text-warning me-1"></i>Root Cause</div>
+              <div class="root-cause-block">{{ item.root_cause }}</div>
+            </div>
+            {% endif %}
+            <div class="mb-3">
+              <div class="small fw-semibold text-muted mb-1"><i class="bi bi-tools text-primary me-1"></i>Resolution</div>
+              <div class="resolution-block">{{ item.resolution }}</div>
+            </div>
+            {% include 'recommendation_feedback.html' %}
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% endif %}
+  {% endif %}
 
 </main>
-
-<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/recommendations.js') }}"></script>
 </body>
 </html>
-
-
