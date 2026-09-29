@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS sync_history (
 CREATE TABLE IF NOT EXISTS error_signatures (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uploaded_by VARCHAR(80),
+    uploaded_at DATETIME,
     signature VARCHAR(500),
     application VARCHAR(120),
     server VARCHAR(120),
@@ -72,6 +73,7 @@ CREATE TABLE IF NOT EXISTS knowledge_repository (
 CREATE TABLE IF NOT EXISTS parsed_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uploaded_by VARCHAR(80),
+    uploaded_at DATETIME,
     source_file VARCHAR(255),
     line_number INTEGER,
     timestamp DATETIME,

@@ -31,6 +31,12 @@ class Config:
 
     CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "60"))
 
+    # How long an uploaded log analysis (parsed_logs/error_signatures) is kept
+    # before the background cleanup job auto-deletes it, if the user never
+    # cleared it or replaced it with a new upload. Keeps the database from
+    # growing indefinitely from forgotten/abandoned uploads.
+    RESULTS_RETENTION_HOURS = int(os.getenv("RESULTS_RETENTION_HOURS", "72"))
+
     # Paths
     DATA_DIR = BASE_DIR / "data"
     LOG_DIR  = BASE_DIR / "logs"

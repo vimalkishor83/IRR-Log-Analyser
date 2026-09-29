@@ -94,6 +94,7 @@ class ErrorSignature(db.Model):
 
     id          = db.Column(db.Integer, primary_key=True)
     uploaded_by = db.Column(db.String(80), index=True)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     signature   = db.Column(db.String(500), index=True)
     application = db.Column(db.String(120))
     server      = db.Column(db.String(120))
@@ -107,12 +108,15 @@ class ParsedLog(db.Model):
     One parsed line from an uploaded log file, scoped to the user who
     uploaded it so concurrent users don't overwrite each other's analysis.
     Replaced for that user on every new upload they make — it only holds
-    each user's most recent analysis, so it stays small.
+    each user's most recent analysis, so it stays small. Also auto-expires
+    after RESULTS_RETENTION_HOURS (see services/log_analyzer.py) so results
+    left un-cleared don't grow the database indefinitely.
     """
     __tablename__ = "parsed_logs"
 
     id          = db.Column(db.Integer, primary_key=True)
     uploaded_by = db.Column(db.String(80), index=True)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     source_file = db.Column(db.String(255))
     line_number = db.Column(db.Integer)
     timestamp   = db.Column(db.DateTime, index=True)

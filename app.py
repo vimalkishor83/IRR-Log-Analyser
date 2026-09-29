@@ -82,19 +82,36 @@ def _register_blueprints(app):
 
 def _start_scheduler(app):
     """
-    Start the background job that syncs incidents and KB articles
-    from ServiceNow every N hours (set SYNC_INTERVAL_HOURS in .env).
+    Start the background jobs:
+    - sync incidents/KB articles from ServiceNow every N hours
+      (set SYNC_INTERVAL_HOURS in .env)
+    - delete uploaded log analysis results older than
+      RESULTS_RETENTION_HOURS, so forgotten uploads don't grow the DB
     """
     from services.sync_service import SyncService
+    from services.log_analyzer import LogAnalyzer
 
     hours = app.config.get("SYNC_INTERVAL_HOURS", 6)
     svc   = SyncService(app.config)
 
+    retention_hours = app.config.get("RESULTS_RETENTION_HOURS", 72)
+    analyzer        = LogAnalyzer()
+
+    def _cleanup_expired_results():
+        deleted_logs, deleted_sigs = analyzer.delete_expired(retention_hours)
+        if deleted_logs or deleted_sigs:
+            log.info(
+                "Retention cleanup: removed %s parsed_logs, %s error_signatures older than %sh",
+                deleted_logs, deleted_sigs, retention_hours,
+            )
+
     scheduler = BackgroundScheduler(daemon=True)
     scheduler.add_job(lambda: _run_in_context(app, svc.sync_incidents),   "interval", hours=hours)
     scheduler.add_job(lambda: _run_in_context(app, svc.sync_kb_articles), "interval", hours=hours)
+    scheduler.add_job(lambda: _run_in_context(app, _cleanup_expired_results), "interval", hours=1)
     scheduler.start()
     log.info("Background sync scheduler started (every %s hours)", hours)
+    log.info("Results retention cleanup scheduled hourly (retain %sh)", retention_hours)
 
 
 def _run_in_context(app, func):

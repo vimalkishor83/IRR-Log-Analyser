@@ -14,7 +14,7 @@ import gzip
 import io
 import re
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from core.database import db
 from core.models import ErrorSignature, ParsedLog
@@ -130,11 +130,12 @@ class LogAnalyzer:
         don't clear each other's analysis.
         Commits once at the end to keep DB writes fast.
         """
+        now = datetime.utcnow()
         ParsedLog.query.filter_by(uploaded_by=uploaded_by).delete()
         ErrorSignature.query.filter_by(uploaded_by=uploaded_by).delete()
 
         for entry in entries:
-            db.session.add(ParsedLog(uploaded_by=uploaded_by, **entry))
+            db.session.add(ParsedLog(uploaded_by=uploaded_by, uploaded_at=now, **entry))
 
             if entry["severity"] in {"ERROR", "FATAL", "CRITICAL"}:
                 sig = ErrorSignature.query.filter_by(
@@ -142,10 +143,12 @@ class LogAnalyzer:
                 ).first()
                 if sig:
                     sig.frequency += 1
-                    sig.last_seen  = entry["timestamp"]
+                    sig.last_seen   = entry["timestamp"]
+                    sig.uploaded_at = now
                 else:
                     db.session.add(ErrorSignature(
                         uploaded_by = uploaded_by,
+                        uploaded_at = now,
                         signature   = entry["signature"],
                         application = entry["application"],
                         server      = entry["server"],
@@ -154,6 +157,22 @@ class LogAnalyzer:
                     ))
 
         db.session.commit()
+
+    # ── Retention cleanup ─────────────────────────────────────────────────────
+
+    def delete_expired(self, retention_hours):
+        """
+        Delete parsed_logs/error_signatures rows older than retention_hours.
+        Called on a schedule (see app.py's background scheduler) so results
+        left un-cleared by a user don't grow the database indefinitely --
+        an upload replaces a user's own rows immediately anyway, so this
+        cleanup only matters for rows nobody ever re-uploaded over or cleared.
+        """
+        cutoff = datetime.utcnow() - timedelta(hours=retention_hours)
+        deleted_logs = ParsedLog.query.filter(ParsedLog.uploaded_at < cutoff).delete()
+        deleted_sigs = ErrorSignature.query.filter(ErrorSignature.uploaded_at < cutoff).delete()
+        db.session.commit()
+        return deleted_logs, deleted_sigs
 
     # ── Summary ───────────────────────────────────────────────────────────────
 

@@ -63,6 +63,10 @@ def _apply_migrations(db):
         # analyzing different files don't clear each other's results.
         "ALTER TABLE parsed_logs ADD COLUMN uploaded_by VARCHAR(80)",
         "ALTER TABLE error_signatures ADD COLUMN uploaded_by VARCHAR(80)",
+        # Upload time, used by the retention cleanup job to auto-expire
+        # old results instead of growing the database indefinitely.
+        "ALTER TABLE parsed_logs ADD COLUMN uploaded_at DATETIME",
+        "ALTER TABLE error_signatures ADD COLUMN uploaded_at DATETIME",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
