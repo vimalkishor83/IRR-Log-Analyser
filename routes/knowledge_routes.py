@@ -1,8 +1,4 @@
-"""
-knowledge_routes.py
--------------------
-Knowledge Repository page and its CRUD API.
-"""
+"""Knowledge Repository page and its CRUD API."""
 
 from flask import Blueprint, jsonify, render_template, request, session
 

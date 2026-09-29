@@ -1,18 +1,4 @@
-"""
-app.py
-------
-Application entry point. Keeps this file as short as possible —
-all the real logic lives in core/, services/, and routes/.
-
-Startup order:
-  1. Load config from config.py (reads .env)
-  2. Set up rotating log files
-  3. Create Flask app and connect the database
-  4. Register all route blueprints
-  5. Create the first admin account from env vars (first run only)
-  6. Start the background sync scheduler
-  7. Run the development server (only when called directly)
-"""
+"""Application entry point."""
 
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -81,37 +67,21 @@ def _register_blueprints(app):
 
 
 def _start_scheduler(app):
-    """
-    Start the background jobs:
-    - sync incidents/KB articles from ServiceNow every N hours
-      (set SYNC_INTERVAL_HOURS in .env)
-    - delete uploaded log analysis results older than
-      RESULTS_RETENTION_HOURS, so forgotten uploads don't grow the DB
-    """
+    """Start the ServiceNow sync jobs and the log-retention cleanup job."""
     from services.sync_service import SyncService
     from services.log_analyzer import LogAnalyzer
 
-    hours = app.config.get("SYNC_INTERVAL_HOURS", 6)
-    svc   = SyncService(app.config)
-
+    hours           = app.config.get("SYNC_INTERVAL_HOURS", 6)
     retention_hours = app.config.get("RESULTS_RETENTION_HOURS", 72)
+    svc             = SyncService(app.config)
     analyzer        = LogAnalyzer()
-
-    def _cleanup_expired_results():
-        deleted_logs, deleted_sigs = analyzer.delete_expired(retention_hours)
-        if deleted_logs or deleted_sigs:
-            log.info(
-                "Retention cleanup: removed %s parsed_logs, %s error_signatures older than %sh",
-                deleted_logs, deleted_sigs, retention_hours,
-            )
 
     scheduler = BackgroundScheduler(daemon=True)
     scheduler.add_job(lambda: _run_in_context(app, svc.sync_incidents),   "interval", hours=hours)
     scheduler.add_job(lambda: _run_in_context(app, svc.sync_kb_articles), "interval", hours=hours)
-    scheduler.add_job(lambda: _run_in_context(app, _cleanup_expired_results), "interval", hours=1)
+    scheduler.add_job(lambda: _run_in_context(app, lambda: analyzer.delete_expired(retention_hours)), "interval", hours=1)
     scheduler.start()
-    log.info("Background sync scheduler started (every %s hours)", hours)
-    log.info("Results retention cleanup scheduled hourly (retain %sh)", retention_hours)
+    log.info("Background scheduler started (sync every %sh, retention cleanup hourly)", hours)
 
 
 def _run_in_context(app, func):
@@ -119,8 +89,6 @@ def _run_in_context(app, func):
     with app.app_context():
         func()
 
-
-# ── Entry point ───────────────────────────────────────────────────────────────
 
 app = create_app()
 _start_scheduler(app)

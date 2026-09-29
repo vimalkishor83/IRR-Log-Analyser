@@ -1,9 +1,4 @@
-"""
-knowledge_service.py
---------------------
-CRUD operations for the manually-maintained Knowledge Repository.
-These are entries added by admins/SMEs through the Knowledge page.
-"""
+"""CRUD operations for the manually-maintained Knowledge Repository."""
 
 from core.database import db
 from core.models import KnowledgeEntry

@@ -1,37 +1,15 @@
-"""
-tfidf_engine.py
----------------
-Builds a search index so the recommendation engine can find similar
-past incidents quickly.
-
-How it works (simple version):
-  1. Every incident / KB article / knowledge entry is turned into a
-     bag of words (TF-IDF vector).
-  2. When a user searches, their query is also turned into a vector.
-  3. We compare the query vector against every document vector using
-     cosine similarity — higher score = more similar.
-
-The index lives in memory. Call retrain() after new data is imported.
-"""
+"""Builds a TF-IDF search index so recommendations can find similar past incidents."""
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# These three variables hold the trained index.
-# They start as None/empty and are filled by retrain().
 _vectorizer = None   # learns the vocabulary and IDF weights
 _matrix     = None   # TF-IDF vectors for every document
 _documents  = []     # metadata for each document (same order as _matrix rows)
 
 
-# ── Training ──────────────────────────────────────────────────────────────────
-
 def retrain(incidents, kb_articles, knowledge_entries):
-    """
-    Build the index from scratch using the data provided.
-    Call this after importing incidents or adding knowledge entries.
-    Returns the number of documents indexed.
-    """
+    """Rebuild the index from scratch. Returns the number of documents indexed."""
     global _vectorizer, _matrix, _documents
 
     texts     = []  # raw text for each document
@@ -98,14 +76,8 @@ def retrain(incidents, kb_articles, knowledge_entries):
     return len(documents)
 
 
-# ── Searching ─────────────────────────────────────────────────────────────────
-
 def search(query_text, top_n=10):
-    """
-    Find the most similar documents for a query string.
-    Returns a list of dicts with similarity score (0-100) and document info.
-    Returns [] if the index has not been trained yet.
-    """
+    """Return the most similar documents for a query, with similarity 0-100."""
     if _vectorizer is None or _matrix is None:
         return []
 
@@ -114,9 +86,7 @@ def search(query_text, top_n=10):
 
     query_vector = _vectorizer.transform([query_text])
     scores       = cosine_similarity(query_vector, _matrix).flatten()
-
-    # Sort indices highest-score-first, take top N
-    top_indices = scores.argsort()[::-1][:top_n]
+    top_indices  = scores.argsort()[::-1][:top_n]
 
     results = []
     for idx in top_indices:
@@ -131,17 +101,12 @@ def search(query_text, top_n=10):
 
 
 def is_trained():
-    """Return True if the index is ready to use."""
     return _vectorizer is not None
 
 
 def document_count():
-    """Return how many documents are in the index."""
     return len(_documents)
 
 
-# ── Internal helper ───────────────────────────────────────────────────────────
-
 def _join(*parts):
-    """Combine several text fields into one string, skipping empty ones."""
     return " ".join(p.strip() for p in parts if p and p.strip())

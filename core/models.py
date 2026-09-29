@@ -1,21 +1,4 @@
-"""
-models.py
----------
-All database tables defined as Python classes.
-SQLAlchemy creates the actual SQL tables from these automatically.
-
-Tables:
-  users                — login accounts, roles, module access
-  incidents            — resolved incidents (knowledge base for recommendations)
-  kb_articles          — KB articles from ServiceNow
-  knowledge_repository — manually entered patterns by admins/SMEs
-  error_signatures     — unique error fingerprints found in uploaded logs
-  parsed_logs          — individual log lines from the most recent upload
-  feedback             — Helpful / Not Helpful ratings from users
-  sync_history         — last ServiceNow sync result per source
-  audit_logs           — who did what and when
-  servicenow_groups    — assignment groups used to filter synced incident data
-"""
+"""Database tables."""
 
 from datetime import datetime
 from core.database import db
@@ -84,12 +67,7 @@ class KnowledgeEntry(db.Model):
 
 
 class ErrorSignature(db.Model):
-    """
-    A unique error pattern (fingerprint) found in uploaded log files,
-    scoped to the user who uploaded them so concurrent users don't
-    overwrite each other's analysis.
-    Numbers and IDs are stripped so similar errors share one signature.
-    """
+    """A unique error fingerprint from an uploaded log, scoped per user."""
     __tablename__ = "error_signatures"
 
     id          = db.Column(db.Integer, primary_key=True)
@@ -104,14 +82,7 @@ class ErrorSignature(db.Model):
 
 
 class ParsedLog(db.Model):
-    """
-    One parsed line from an uploaded log file, scoped to the user who
-    uploaded it so concurrent users don't overwrite each other's analysis.
-    Replaced for that user on every new upload they make — it only holds
-    each user's most recent analysis, so it stays small. Also auto-expires
-    after RESULTS_RETENTION_HOURS (see services/log_analyzer.py) so results
-    left un-cleared don't grow the database indefinitely.
-    """
+    """One parsed log line from a user's most recent upload."""
     __tablename__ = "parsed_logs"
 
     id          = db.Column(db.Integer, primary_key=True)

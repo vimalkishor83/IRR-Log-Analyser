@@ -1,8 +1,4 @@
-"""
-dashboard_routes.py
--------------------
-Log Analyzer dashboard — page + all its API endpoints.
-"""
+"""Log Analyzer dashboard — page + all its API endpoints."""
 
 import csv
 import io
@@ -25,15 +21,11 @@ def _audit(action, details=""):
     db.session.commit()
 
 
-# ── Pages ─────────────────────────────────────────────────────────────────────
-
 @dashboard_bp.route("/")
 @module_required("dashboard")
 def index():
     return render_template("dashboard.html")
 
-
-# ── Dashboard API ─────────────────────────────────────────────────────────────
 
 @dashboard_bp.get("/api/dashboard")
 @login_required
@@ -233,8 +225,6 @@ def clear_analysis():
     _audit("clear_analysis", "Cleared parsed logs")
     return jsonify({"message": "Analysis cleared."})
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _log_dict(row):
     return {

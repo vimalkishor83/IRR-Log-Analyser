@@ -1,17 +1,4 @@
-"""
-snow_client.py
---------------
-Talks to ServiceNow (real or mock) over HTTP.
-
-Auth:  tries JWT token first (the mock supports this).
-       Falls back to Basic Auth if token is not available.
-
-Usage:
-    client = ServiceNowClient(app.config)
-    incidents = client.get_closed_incidents()
-    incident  = client.get_incident_by_number("INC0001234")
-    articles  = client.get_kb_articles()
-"""
+"""Talks to ServiceNow (real or mock) over HTTP. Tries JWT auth, falls back to Basic Auth."""
 
 import logging
 
@@ -40,13 +27,8 @@ class ServiceNowClient:
         """Return True if URL and credentials are all provided."""
         return bool(self.base_url and self.username and self.password)
 
-    # ── Fetching incidents ────────────────────────────────────────────────────
-
     def get_closed_incidents(self, assignment_groups=None):
-        """
-        Return all Resolved / Closed incidents.
-        Pass a list of group names to filter by assignment group.
-        """
+        """Return all Resolved/Closed incidents, optionally filtered by assignment group."""
         if not self.is_configured():
             log.warning("ServiceNow not configured — skipping sync")
             return []
@@ -72,11 +54,7 @@ class ServiceNowClient:
         return all_incidents
 
     def get_incident_by_number(self, number):
-        """
-        Fetch one incident by number (works for ANY state — New, In Progress, etc.)
-        Returns a dict or None if not found.
-        Used to look up open/in-progress incidents for recommendations.
-        """
+        """Fetch one incident by number, any state. Returns a dict or None."""
         if not self.is_configured():
             return None
 
@@ -109,19 +87,8 @@ class ServiceNowClient:
                 return []
             raise
 
-    # ── Query builder ─────────────────────────────────────────────────────────
-
     def _build_queries(self, assignment_groups):
-        """
-        Build the list of sysparm_query strings to send.
-
-        No group filter:
-            ["state=Resolved", "state=Closed"]
-
-        With groups:
-            ["state=Resolved^assignment_group=App Team",
-             "state=Closed^assignment_group=App Team", ...]
-        """
+        """Build the sysparm_query strings, one per state x assignment group."""
         groups = [g.strip() for g in (assignment_groups or []) if g.strip()]
         queries = []
 
@@ -134,8 +101,6 @@ class ServiceNowClient:
                 queries.append(f"state={state}")
 
         return queries
-
-    # ── Pagination ────────────────────────────────────────────────────────────
 
     def _get_all_pages(self, endpoint, extra_params=None):
         """Keep fetching pages until we get a partial page (= last page)."""
@@ -156,8 +121,6 @@ class ServiceNowClient:
             offset += PAGE_SIZE
 
         return all_records
-
-    # ── Auth ──────────────────────────────────────────────────────────────────
 
     def _ensure_token(self):
         """Try to get a JWT token. Silently skip if the endpoint doesn't exist."""
@@ -183,10 +146,7 @@ class ServiceNowClient:
             return None, {"Authorization": f"Bearer {self._token}"}
         return HTTPBasicAuth(self.username, self.password), {}
 
-    # ── HTTP ──────────────────────────────────────────────────────────────────
-
     def _get(self, endpoint, params):
-        """Make a GET request and return the result list."""
         auth, headers = self._auth_headers()
         resp = requests.get(
             f"{self.base_url}{endpoint}",

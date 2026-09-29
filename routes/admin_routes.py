@@ -1,8 +1,4 @@
-"""
-admin_routes.py
----------------
-Admin panel routes: user management, sync controls, audit log.
-"""
+"""Admin panel routes: user management, sync controls, audit log."""
 
 import csv
 import logging
@@ -66,8 +62,6 @@ def edit_user_form(user_id):
                             selected_modules=selected, role=role)
 
 
-# ── Users ─────────────────────────────────────────────────────────────────────
-
 @admin_bp.post("/admin/users/add")
 @role_required("Admin")
 def create_user():
@@ -121,8 +115,6 @@ def delete_user(user_id):
     _audit("delete_user", user.username)
     return redirect(url_for("admin.users_page", status=f"User '{user.username}' deleted."))
 
-
-# ── Sync ──────────────────────────────────────────────────────────────────────
 
 @admin_bp.post("/api/admin/sync")
 @admin_bp.post("/api/admin/sync-now")  # alias used by the admin JS
@@ -214,8 +206,6 @@ def sync_history():
     } for r in rows])
 
 
-# ── Audit log ─────────────────────────────────────────────────────────────────
-
 @admin_bp.get("/api/admin/audit-log")
 @role_required("Admin")
 def audit_log():
@@ -227,8 +217,6 @@ def audit_log():
         "details":   r.details,
     } for r in rows])
 
-
-# ── ServiceNow Groups ─────────────────────────────────────────────────────────
 
 @admin_bp.get("/api/admin/snow-groups")
 @role_required("Admin")
@@ -277,8 +265,6 @@ def delete_snow_group(group_id):
     return jsonify({"message": "Group deleted"})
 
 
-# ── Stats ─────────────────────────────────────────────────────────────────────
-
 @admin_bp.get("/api/admin/stats")
 @login_required
 def stats():
@@ -288,8 +274,6 @@ def stats():
         "total_users":       User.query.count(),
     })
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _modules_str(role, selected_modules):
     """Comma-separated module list for storage. Admin role always gets all modules."""

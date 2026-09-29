@@ -1,17 +1,4 @@
-"""
-logger.py
----------
-Configures how the application writes its own log files.
-
-Two rotation modes (controlled via environment variables):
-  Size-based  — create a new file after LOG_MAX_BYTES (default 5 MB)
-  Time-based  — create a new file at a set interval (set LOG_ROTATE_WHEN)
-
-Set these in your .env file:
-  LOG_MAX_BYTES=5242880     # 5 MB per file
-  LOG_BACKUP_COUNT=10       # keep 10 old files
-  LOG_ROTATE_WHEN=midnight  # or "h" for hourly — overrides size rotation
-"""
+"""Sets up rotating file logs. Size-based by default, or time-based via LOG_ROTATE_WHEN."""
 
 import logging
 import os

@@ -1,19 +1,4 @@
-"""
-sync_service.py
----------------
-Pulls data from ServiceNow and saves only quality records to the database.
-
-Before saving each incident, six validation rules are applied:
-  1. Required fields    — must have incident number, description, and resolution
-  2. Minimum length     — description ≥ 10 chars, resolution ≥ 20 chars
-  3. Junk text          — skip placeholders like "test", "n/a", "done", "fixed"
-  4. Duplicate resolution — skip if 5+ incidents already share the same resolution
-  5. State verification — record must actually be Resolved or Closed
-  6. Assignment group   — if a group filter is configured, reject non-matching records
-
-The sync summary includes a `skipped_validation` count so admins can see
-how many records were filtered out.
-"""
+"""Pulls data from ServiceNow and saves only quality records (see _validate_incident)."""
 
 import logging
 import re
@@ -48,13 +33,8 @@ class SyncService:
         raw = (config.get("SERVICENOW_ASSIGNMENT_GROUPS") or "").strip()
         self.allowed_groups = {g.strip().lower() for g in raw.split(",") if g.strip()}
 
-    # ── Public sync methods ───────────────────────────────────────────────────
-
     def sync_incidents(self):
-        """
-        Pull Resolved/Closed incidents from ServiceNow.
-        Validate each one before saving — bad data is counted and skipped.
-        """
+        """Pull Resolved/Closed incidents from ServiceNow, validating each one."""
         try:
             rows = self.client.get_closed_incidents(
                 assignment_groups=list(self.allowed_groups) if self.allowed_groups else None
@@ -121,10 +101,7 @@ class SyncService:
             self._record_sync("servicenow_incidents", "Failed", str(err))
 
     def sync_kb_articles(self):
-        """
-        Pull KB articles from ServiceNow.
-        Skips articles that have no usable content or already exist in the DB.
-        """
+        """Pull KB articles from ServiceNow, skipping junk or duplicate ones."""
         try:
             rows     = self.client.get_kb_articles()
             imported = 0
@@ -164,13 +141,8 @@ class SyncService:
             log.error("KB sync failed: %s", err)
             self._record_sync("servicenow_kb", "Failed", str(err))
 
-    # ── Validation ────────────────────────────────────────────────────────────
-
     def _validate_incident(self, row, resolution_counts):
-        """
-        Run all six validation rules against one raw ServiceNow record.
-        Returns a short failure reason string, or None if the record is good.
-        """
+        """Run the six validation rules; return a failure reason or None."""
         number      = (row.get("number") or "").strip()
         description = _clean(row.get("short_description") or "")
         resolution  = _clean(row.get("close_notes") or "")
@@ -212,8 +184,6 @@ class SyncService:
 
         return None  # all checks passed
 
-    # ── Helper ────────────────────────────────────────────────────────────────
-
     def _record_sync(self, source, status, message):
         """Save one sync result row so admins can see the last sync outcome."""
         try:
@@ -228,23 +198,15 @@ class SyncService:
             log.error("Could not save sync record: %s", err)
 
 
-# ── Module-level helpers ──────────────────────────────────────────────────────
-
 def _clean(text):
-    """
-    Strip leading/trailing whitespace and collapse internal whitespace.
-    Returns an empty string if text is None.
-    """
+    """Strip and collapse whitespace; return "" if text is None."""
     if not text:
         return ""
     return re.sub(r"\s+", " ", str(text).strip())
 
 
 def _is_junk(text):
-    """
-    Return True if the text is a known throwaway value.
-    Checks exact match and also whether the whole text is just one junk phrase.
-    """
+    """Return True if the text is a known throwaway/placeholder value."""
     if not text:
         return True
     normalised = text.strip().lower()
@@ -275,11 +237,7 @@ def _skip_category(reason):
 
 
 def _count_existing_resolutions():
-    """
-    Build a dict of { resolution_text: count } from incidents already in the DB.
-    Used so we can detect duplicate resolutions across the current sync batch
-    combined with what's already stored.
-    """
+    """Build { resolution_text: count } from incidents already in the DB."""
     counts = {}
     for inc in Incident.query.with_entities(Incident.resolution).all():
         text = (inc.resolution or "").strip()

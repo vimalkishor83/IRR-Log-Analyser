@@ -1,8 +1,4 @@
-"""
-recommendation_routes.py
-------------------------
-Recommendations page + its search and feedback API endpoints.
-"""
+"""Recommendations page + its search and feedback API endpoints."""
 
 import logging
 

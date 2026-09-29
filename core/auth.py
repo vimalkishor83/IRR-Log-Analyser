@@ -1,25 +1,4 @@
-"""
-auth.py
--------
-Handles login, logout, and page-level access control.
-
-Roles
------
-Admin   — full access to every page, no restrictions
-Analyst — can only access pages listed in their 'modules' field
-
-How to protect a route
------------------------
-    from core.auth import login_required, role_required, module_required
-
-    @app.route("/recommendations")
-    @module_required("recommendations")   # only users who have this module
-    def recommendations_page(): ...
-
-    @app.route("/admin")
-    @role_required("Admin")               # Admin role only
-    def admin_page(): ...
-"""
+"""Login, logout, and page-level access control."""
 
 import logging
 import os
@@ -46,26 +25,15 @@ MODULE_LABELS = {
 ADMIN_MODULES = ",".join(ALL_MODULES)
 
 
-# ── Startup helper ────────────────────────────────────────────────────────────
-
 def create_first_admin():
-    """Create the first Admin user from environment variables, if none exists
-    yet and the required variables are set. Never hardcodes a username or
-    password -- if ADMIN_USERNAME/ADMIN_PASSWORD aren't both set, this
-    silently does nothing (fails closed: no default account is ever
-    created), and an operator sets up the first admin by setting these
-    variables once and restarting the app."""
+    """Create the first admin from env vars if no users exist yet."""
     if User.query.first():
         return
 
     username = os.environ.get("ADMIN_USERNAME")
     password = os.environ.get("ADMIN_PASSWORD")
     if not (username and password):
-        logging.getLogger(__name__).warning(
-            "No users exist yet and ADMIN_USERNAME/ADMIN_PASSWORD are not "
-            "both set -- skipping first-admin creation. Set both and "
-            "restart the app to create the first admin account."
-        )
+        logging.getLogger(__name__).warning("ADMIN_USERNAME/ADMIN_PASSWORD not set, skipping first-admin creation")
         return
 
     db.session.add(User(
@@ -78,18 +46,12 @@ def create_first_admin():
     logging.getLogger(__name__).info("First admin created: username=%s", username)
 
 
-# ── Login / logout ────────────────────────────────────────────────────────────
-
 def login_user(username, password):
-    """
-    Check username and password. If correct, save user info in the session.
-    Returns True on success, False if credentials are wrong.
-    """
+    """Check credentials and store user info in the session."""
     user = User.query.filter_by(username=username).first()
     if not user or not check_password_hash(user.password, password):
         return False
 
-    # Store user info in the session so we don't query DB on every request
     session["username"] = user.username
     session["role"]     = user.role
     session["modules"]  = ADMIN_MODULES if user.role == "Admin" else (user.modules or "")
@@ -101,8 +63,6 @@ def get_current_modules():
     raw = session.get("modules", "")
     return [m.strip() for m in raw.split(",") if m.strip()]
 
-
-# ── Route decorators ──────────────────────────────────────────────────────────
 
 def login_required(view):
     """Redirect to login page if the user is not logged in."""

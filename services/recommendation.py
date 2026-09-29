@@ -1,18 +1,4 @@
-"""
-recommendation.py
------------------
-Finds the best-matching resolved incidents and KB articles for a user query.
-
-Search order:
-  1. Exact incident number match   — instant, 100% confidence
-  2. TF-IDF similarity search      — fast, uses the pre-built index
-  3. SequenceMatcher fuzzy search  — slower fallback if index is not built
-
-Confidence score (0-99) combines:
-  - Similarity to the query
-  - How many times the resolution has been used successfully
-  - Overall user feedback (Helpful vs Not Helpful ratings)
-"""
+"""Finds the best-matching resolved incidents and KB articles for a query."""
 
 from difflib import SequenceMatcher
 
@@ -24,12 +10,7 @@ from services import tfidf_engine
 class RecommendationEngine:
 
     def search(self, query_text, incident_number=""):
-        """
-        Return up to 5 recommendations for the given query.
-
-        query_text      — error message, exception, or log snippet
-        incident_number — optional; if given, check for an exact match first
-        """
+        """Return up to 5 recommendations for the given query."""
         helpful     = Feedback.query.filter_by(value="Helpful").count()
         not_helpful = Feedback.query.filter_by(value="Not Helpful").count()
 
@@ -60,11 +41,7 @@ class RecommendationEngine:
                 seen.add(key)
                 unique.append(item)
 
-        top5 = unique[:5]
-
-        return top5
-
-    # ── TF-IDF search ─────────────────────────────────────────────────────────
+        return unique[:5]
 
     def _tfidf_search(self, query_text, helpful, not_helpful):
         docs       = tfidf_engine.search(query_text, top_n=20)
@@ -83,8 +60,6 @@ class RecommendationEngine:
                 "reason":           doc["reason"],
             })
         return candidates
-
-    # ── Fuzzy fallback ────────────────────────────────────────────────────────
 
     def _fuzzy_search(self, query_text, helpful, not_helpful):
         candidates = []
@@ -129,10 +104,7 @@ class RecommendationEngine:
 
         return candidates
 
-    # ── Helpers ───────────────────────────────────────────────────────────────
-
     def _incident_result(self, inc, score, reason, helpful, not_helpful):
-        """Convert an Incident model into a result dict."""
         return {
             "source":           "Historical Incident",
             "incident_number":  inc.incident_number,
@@ -146,10 +118,7 @@ class RecommendationEngine:
         }
 
     def _confidence(self, similarity, success_count, helpful, not_helpful):
-        """
-        Calculate a confidence score between 0 and 99.
-        Higher similarity, more past uses, and positive feedback all increase it.
-        """
+        """Confidence score 0-99: similarity + usage history + feedback."""
         feedback_bonus = max(-10, min(10, helpful - not_helpful))
         usage_bonus    = min(15, (success_count or 0) * 1.5)
         raw            = similarity * 0.75 + usage_bonus + feedback_bonus

@@ -1,14 +1,4 @@
-"""
-log_analyzer.py
----------------
-Parses uploaded log files entirely in memory — no files are written to disk.
-
-The caller passes Werkzeug FileStorage objects directly from the HTTP request.
-We read the bytes, decode them, parse every line, and save results straight
-to the database.  The uploads/ folder is no longer needed.
-
-Supported file types: .log  .txt  .out  .csv  .gz
-"""
+"""Parses uploaded log files in memory and saves results to the database."""
 
 import gzip
 import io
@@ -35,15 +25,7 @@ SUPPORTED_EXTENSIONS = {".log", ".txt", ".out", ".csv", ".gz"}
 class LogAnalyzer:
 
     def analyze_uploads(self, file_storage_list, uploaded_by):
-        """
-        Parse a list of Werkzeug FileStorage objects (from request.files).
-        Reads each file into memory, parses it, saves to DB, returns a summary.
-        No files are written to disk.
-
-        uploaded_by scopes the saved rows to this user (session username) so
-        concurrent users analyzing different files don't overwrite each
-        other's results.
-        """
+        """Parse uploaded files and save the results scoped to uploaded_by."""
         all_entries = []
         messages    = []
 
@@ -66,19 +48,12 @@ class LogAnalyzer:
         self._save_to_db(all_entries, uploaded_by)
         return self._build_summary(all_entries, messages)
 
-    # ── Decoding ──────────────────────────────────────────────────────────────
-
     def _decode(self, raw_bytes, ext):
-        """
-        Turn raw bytes into a list of text lines.
-        Handles gzip-compressed files transparently.
-        """
+        """Turn raw bytes into text lines, handling gzip transparently."""
         if ext == ".gz":
             raw_bytes = gzip.decompress(raw_bytes)
         text = raw_bytes.decode("utf-8", errors="ignore")
         return text.splitlines()
-
-    # ── Parsing ───────────────────────────────────────────────────────────────
 
     def _parse_lines(self, lines, source_name):
         """Parse a list of text lines and return a list of entry dicts."""
@@ -120,16 +95,8 @@ class LogAnalyzer:
 
         return entries
 
-    # ── Database ──────────────────────────────────────────────────────────────
-
     def _save_to_db(self, entries, uploaded_by):
-        """
-        Replace this user's rows in parsed_logs with the new entries.
-        Also update this user's error_signatures (frequency counts per
-        unique error pattern). Scoped by uploaded_by so concurrent users
-        don't clear each other's analysis.
-        Commits once at the end to keep DB writes fast.
-        """
+        """Replace this user's parsed_logs/error_signatures rows with new entries."""
         now = datetime.utcnow()
         ParsedLog.query.filter_by(uploaded_by=uploaded_by).delete()
         ErrorSignature.query.filter_by(uploaded_by=uploaded_by).delete()
@@ -158,23 +125,12 @@ class LogAnalyzer:
 
         db.session.commit()
 
-    # ── Retention cleanup ─────────────────────────────────────────────────────
-
     def delete_expired(self, retention_hours):
-        """
-        Delete parsed_logs/error_signatures rows older than retention_hours.
-        Called on a schedule (see app.py's background scheduler) so results
-        left un-cleared by a user don't grow the database indefinitely --
-        an upload replaces a user's own rows immediately anyway, so this
-        cleanup only matters for rows nobody ever re-uploaded over or cleared.
-        """
+        """Delete parsed logs older than retention_hours."""
         cutoff = datetime.utcnow() - timedelta(hours=retention_hours)
-        deleted_logs = ParsedLog.query.filter(ParsedLog.uploaded_at < cutoff).delete()
-        deleted_sigs = ErrorSignature.query.filter(ErrorSignature.uploaded_at < cutoff).delete()
+        ParsedLog.query.filter(ParsedLog.uploaded_at < cutoff).delete()
+        ErrorSignature.query.filter(ErrorSignature.uploaded_at < cutoff).delete()
         db.session.commit()
-        return deleted_logs, deleted_sigs
-
-    # ── Summary ───────────────────────────────────────────────────────────────
 
     def _build_summary(self, entries, messages):
         sev_counts = Counter(e["severity"] for e in entries)
@@ -258,8 +214,6 @@ class LogAnalyzer:
         sig_counts = Counter(e["signature"] for e in entries)
         most_common_sig = sig_counts.most_common(1)[0][0]
         return most_common_sig
-
-    # ── Small helpers ─────────────────────────────────────────────────────────
 
     def _parse_ts(self, value):
         if not value:

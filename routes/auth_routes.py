@@ -1,8 +1,4 @@
-"""
-auth_routes.py
---------------
-Login and logout pages.
-"""
+"""Login and logout pages."""
 
 from flask import Blueprint, redirect, render_template, request, session, url_for
 from core.auth import login_user
