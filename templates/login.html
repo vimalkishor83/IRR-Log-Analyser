@@ -107,13 +107,6 @@
     }
 
 
-    .left-footer {
-      font-size: .68rem;
-      color: #334155;
-      position: relative;
-      z-index: 1;
-    }
-
     /* ══ RIGHT PANEL — 40% ══════════════════════════════════════════════ */
     .right-panel {
       flex: 0 0 40%;
@@ -233,39 +226,6 @@
     .btn-signin:hover  { opacity: .9; }
     .btn-signin:active { transform: scale(.98); }
 
-    /* Divider */
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-      margin: 1.5rem 0 .5rem;
-      font-size: .72rem;
-      color: #cbd5e1;
-    }
-    .divider::before, .divider::after {
-      content: ""; flex: 1;
-      height: 1px; background: #e2e8f0;
-    }
-
-    /* Role pills */
-    .role-pills {
-      display: flex;
-      gap: .5rem;
-      flex-wrap: wrap;
-    }
-    .role-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: .3rem;
-      padding: .3rem .7rem;
-      border-radius: 20px;
-      font-size: .72rem;
-      font-weight: 600;
-      cursor: default;
-    }
-    .pill-admin  { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-    .pill-analyst{ background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-
     @media (max-width: 768px) {
       body { flex-direction: column; }
       .left-panel { flex: none; padding: 2rem; }
@@ -315,7 +275,6 @@
       </div>
     </div>
 
-    <div class="left-footer">&copy; 2026 IT Operations Platform &nbsp;·&nbsp; v1.0</div>
   </div>
 
   <!-- ══ RIGHT 40% ══════════════════════════════════════════════════════ -->
@@ -359,11 +318,6 @@
         </button>
       </form>
 
-      <div class="divider">available roles</div>
-      <div class="role-pills">
-        <span class="role-pill pill-admin"><i class="bi bi-shield-check"></i> Admin</span>
-        <span class="role-pill pill-analyst"><i class="bi bi-person-badge"></i> Analyst</span>
-      </div>
     </div>
   </div>
 
