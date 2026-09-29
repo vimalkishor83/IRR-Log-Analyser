@@ -202,7 +202,6 @@ class LogAnalyzer:
         sorted_entries = sorted(entries, key=lambda e: e["timestamp"] or datetime.min)
 
         # Try to find a pattern match scanning from the first error
-        import re
         for entry in sorted_entries:
             text = (entry["message"] + " " + (entry["exception"] or "") + " " + (entry["error_code"] or "")).lower()
             for pattern, label in self._ROOT_CAUSE_PATTERNS:
@@ -210,7 +209,6 @@ class LogAnalyzer:
                     return label
 
         # Fall back to the signature of the most frequent error
-        from collections import Counter
         sig_counts = Counter(e["signature"] for e in entries)
         most_common_sig = sig_counts.most_common(1)[0][0]
         return most_common_sig

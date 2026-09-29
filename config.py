@@ -22,8 +22,6 @@ class Config:
     # Leave empty to pull all resolved/closed incidents.
     SERVICENOW_ASSIGNMENT_GROUPS = os.getenv("SERVICENOW_ASSIGNMENT_GROUPS", "")
 
-    CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "60"))
-
     # Auto-delete uploaded log analysis after this many hours
     RESULTS_RETENTION_HOURS = int(os.getenv("RESULTS_RETENTION_HOURS", "72"))
 

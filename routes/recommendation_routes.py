@@ -2,21 +2,17 @@
 
 import logging
 
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 
+from core.audit import log_action as _audit
 from core.auth import login_required, module_required
 from core.database import db
-from core.models import AuditLog, Feedback, Incident
+from core.models import Feedback, Incident
 from services.recommendation import RecommendationEngine
 from services.snow_client import ServiceNowClient
 
 log = logging.getLogger(__name__)
 rec_bp = Blueprint("recommendations", __name__)
-
-
-def _audit(action, details=""):
-    db.session.add(AuditLog(username=session.get("username", "system"), action=action, details=details))
-    db.session.commit()
 
 
 @rec_bp.get("/recommendations")

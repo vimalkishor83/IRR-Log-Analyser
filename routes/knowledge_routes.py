@@ -1,18 +1,12 @@
 """Knowledge Repository page and its CRUD routes."""
 
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 
+from core.audit import log_action as _audit
 from core.auth import module_required
-from core.database import db
-from core.models import AuditLog
 from services.knowledge_service import KnowledgeService
 
 knowledge_bp = Blueprint("knowledge", __name__)
-
-
-def _audit(action, details=""):
-    db.session.add(AuditLog(username=session.get("username", "system"), action=action, details=details))
-    db.session.commit()
 
 
 def _back_to_list(status=None, error=None, edit_id=None):

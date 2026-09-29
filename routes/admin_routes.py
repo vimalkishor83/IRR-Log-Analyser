@@ -4,20 +4,16 @@ import csv
 import io
 import logging
 
-from flask import Blueprint, Response, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, redirect, render_template, request, url_for
 from werkzeug.security import generate_password_hash
 
+from core.audit import log_action as _audit
 from core.auth import ALL_MODULES, MODULE_LABELS, login_required, role_required
 from core.database import db
-from core.models import AuditLog, Incident, KBArticle, ServiceNowGroup, SyncHistory, User
+from core.models import Incident, KBArticle, ServiceNowGroup, SyncHistory, User
 
 log = logging.getLogger(__name__)
 admin_bp = Blueprint("admin", __name__)
-
-
-def _audit(action, details=""):
-    db.session.add(AuditLog(username=session.get("username", "system"), action=action, details=details))
-    db.session.commit()
 
 
 @admin_bp.get("/admin")
@@ -197,37 +193,6 @@ def download_import_template():
     )
 
 
-@admin_bp.get("/api/admin/status")
-@login_required
-def status():
-    """Return system status for the Index Status panel."""
-    return jsonify(_status_data())
-
-
-@admin_bp.get("/api/admin/sync-history")
-@login_required
-def sync_history():
-    rows = SyncHistory.query.order_by(SyncHistory.last_sync_time.desc()).limit(50).all()
-    return jsonify([{
-        "source":    r.source,
-        "time":      r.last_sync_time.isoformat(sep=" ") if r.last_sync_time else "",
-        "status":    r.status,
-        "message":   r.message,
-    } for r in rows])
-
-
-@admin_bp.get("/api/admin/audit-log")
-@role_required("Admin")
-def audit_log():
-    rows = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(200).all()
-    return jsonify([{
-        "timestamp": r.timestamp.isoformat(sep=" ") if r.timestamp else "",
-        "username":  r.username,
-        "action":    r.action,
-        "details":   r.details,
-    } for r in rows])
-
-
 @admin_bp.post("/admin/snow-groups/add")
 @role_required("Admin")
 def add_snow_group():
@@ -260,16 +225,6 @@ def delete_snow_group(group_id):
     db.session.commit()
     _audit("delete_snow_group", group.name)
     return redirect(url_for("admin.admin_page", message="Group deleted."))
-
-
-@admin_bp.get("/api/admin/stats")
-@login_required
-def stats():
-    return jsonify({
-        "total_incidents":   Incident.query.count(),
-        "total_kb_articles": KBArticle.query.count(),
-        "total_users":       User.query.count(),
-    })
 
 
 def _status_data():

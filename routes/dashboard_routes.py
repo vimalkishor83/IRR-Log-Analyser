@@ -5,20 +5,16 @@ import logging
 from flask import Blueprint, redirect, render_template, request, session, url_for
 from sqlalchemy import func
 
+from core.audit import log_action as _audit
 from core.auth import login_required, module_required
 from core.database import db
-from core.models import AuditLog, ErrorSignature, Incident, KBArticle, ParsedLog
+from core.models import ErrorSignature, Incident, KBArticle, ParsedLog
 from services.log_analyzer import LogAnalyzer
 
 log = logging.getLogger(__name__)
 dashboard_bp = Blueprint("dashboard", __name__)
 
 PER_PAGE = 100
-
-
-def _audit(action, details=""):
-    db.session.add(AuditLog(username=session.get("username", "system"), action=action, details=details))
-    db.session.commit()
 
 
 @dashboard_bp.route("/")

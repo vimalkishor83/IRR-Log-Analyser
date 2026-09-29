@@ -1,16 +1,10 @@
 """Login and logout pages."""
 
 from flask import Blueprint, redirect, render_template, request, session, url_for
+from core.audit import log_action as _audit
 from core.auth import login_user
-from core.database import db
-from core.models import AuditLog
 
 auth_bp = Blueprint("auth", __name__)
-
-
-def _audit(action, details=""):
-    db.session.add(AuditLog(username=session.get("username", "system"), action=action, details=details))
-    db.session.commit()
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
