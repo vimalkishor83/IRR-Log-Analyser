@@ -282,7 +282,7 @@
         <details class="faq-item">
             <summary>Does uploading a new log replace the old one?</summary>
             <div class="faq-body">
-                Yes. Every upload completely replaces the previous analysis. The parsed_logs and error_signatures tables are cleared first, then filled with the new results.
+                Yes, but only your own previous analysis — each user's uploads replace just their own results, so two users analyzing logs at the same time won't overwrite each other.
             </div>
         </details>
     </div>

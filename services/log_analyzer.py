@@ -34,11 +34,15 @@ SUPPORTED_EXTENSIONS = {".log", ".txt", ".out", ".csv", ".gz"}
 
 class LogAnalyzer:
 
-    def analyze_uploads(self, file_storage_list):
+    def analyze_uploads(self, file_storage_list, uploaded_by):
         """
         Parse a list of Werkzeug FileStorage objects (from request.files).
         Reads each file into memory, parses it, saves to DB, returns a summary.
         No files are written to disk.
+
+        uploaded_by scopes the saved rows to this user (session username) so
+        concurrent users analyzing different files don't overwrite each
+        other's results.
         """
         all_entries = []
         messages    = []
@@ -59,7 +63,7 @@ class LogAnalyzer:
             except Exception as err:
                 messages.append(f"Could not read {name}: {err}")
 
-        self._save_to_db(all_entries)
+        self._save_to_db(all_entries, uploaded_by)
         return self._build_summary(all_entries, messages)
 
     # ── Decoding ──────────────────────────────────────────────────────────────
@@ -118,25 +122,30 @@ class LogAnalyzer:
 
     # ── Database ──────────────────────────────────────────────────────────────
 
-    def _save_to_db(self, entries):
+    def _save_to_db(self, entries, uploaded_by):
         """
-        Replace the current parsed_logs table with the new entries.
-        Also update error_signatures (frequency counts per unique error pattern).
+        Replace this user's rows in parsed_logs with the new entries.
+        Also update this user's error_signatures (frequency counts per
+        unique error pattern). Scoped by uploaded_by so concurrent users
+        don't clear each other's analysis.
         Commits once at the end to keep DB writes fast.
         """
-        ParsedLog.query.delete()
-        ErrorSignature.query.delete()
+        ParsedLog.query.filter_by(uploaded_by=uploaded_by).delete()
+        ErrorSignature.query.filter_by(uploaded_by=uploaded_by).delete()
 
         for entry in entries:
-            db.session.add(ParsedLog(**entry))
+            db.session.add(ParsedLog(uploaded_by=uploaded_by, **entry))
 
             if entry["severity"] in {"ERROR", "FATAL", "CRITICAL"}:
-                sig = ErrorSignature.query.filter_by(signature=entry["signature"]).first()
+                sig = ErrorSignature.query.filter_by(
+                    uploaded_by=uploaded_by, signature=entry["signature"]
+                ).first()
                 if sig:
                     sig.frequency += 1
                     sig.last_seen  = entry["timestamp"]
                 else:
                     db.session.add(ErrorSignature(
+                        uploaded_by = uploaded_by,
                         signature   = entry["signature"],
                         application = entry["application"],
                         server      = entry["server"],

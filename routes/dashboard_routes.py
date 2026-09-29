@@ -39,8 +39,14 @@ def index():
 @login_required
 def dashboard_data():
     error_levels = ("ERROR", "FATAL", "CRITICAL")
+    uploaded_by  = session.get("username", "")
 
-    sev_rows = db.session.query(ParsedLog.severity, func.count()).group_by(ParsedLog.severity).all()
+    sev_rows = (
+        db.session.query(ParsedLog.severity, func.count())
+        .filter(ParsedLog.uploaded_by == uploaded_by)
+        .group_by(ParsedLog.severity)
+        .all()
+    )
     sev_map  = {s: c for s, c in sev_rows}
 
     total_logs      = sum(sev_map.values())
@@ -49,20 +55,20 @@ def dashboard_data():
     warning_count   = sev_map.get("WARN", 0)
     unique_errors   = (
         db.session.query(func.count(ParsedLog.signature.distinct()))
-        .filter(ParsedLog.severity.in_(error_levels))
+        .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
         .scalar() or 0
     )
 
     app_rows = (
         db.session.query(ParsedLog.application, func.count())
-        .filter(ParsedLog.severity.in_(error_levels))
+        .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
         .group_by(ParsedLog.application)
         .order_by(func.count().desc())
         .all()
     )
     server_rows = (
         db.session.query(ParsedLog.server, func.count())
-        .filter(ParsedLog.severity.in_(error_levels))
+        .filter(ParsedLog.uploaded_by == uploaded_by, ParsedLog.severity.in_(error_levels))
         .group_by(ParsedLog.server)
         .order_by(func.count().desc())
         .all()
@@ -99,7 +105,7 @@ def get_logs():
     page     = max(1, int(request.args.get("page", 1)))
     per_page = 100
 
-    query = ParsedLog.query
+    query = ParsedLog.query.filter_by(uploaded_by=session.get("username", ""))
     if severity:
         query = query.filter_by(severity=severity)
     if search:
@@ -117,7 +123,7 @@ def top_issues():
 
     rows = (
         ParsedLog.query
-        .filter(ParsedLog.severity.in_(error_levels))
+        .filter(ParsedLog.uploaded_by == session.get("username", ""), ParsedLog.severity.in_(error_levels))
         .order_by(ParsedLog.timestamp.desc())
         .all()
     )
@@ -163,7 +169,7 @@ def export_logs():
     severity = request.args.get("severity", "")
     search   = request.args.get("search", "")
 
-    query = ParsedLog.query
+    query = ParsedLog.query.filter_by(uploaded_by=session.get("username", ""))
     if severity:
         query = query.filter_by(severity=severity)
     if search:
@@ -196,7 +202,7 @@ def logs_count():
     """Return total row count for the current filter (used by pagination)."""
     severity = request.args.get("severity", "")
     search   = request.args.get("search", "")
-    query    = ParsedLog.query
+    query    = ParsedLog.query.filter_by(uploaded_by=session.get("username", ""))
     if severity:
         query = query.filter_by(severity=severity)
     if search:
@@ -212,7 +218,7 @@ def analyze_logs():
         return jsonify({"error": "Please select at least one log file."}), 400
 
     # Files are read into memory and parsed — nothing is written to disk
-    result = LogAnalyzer().analyze_uploads(files)
+    result = LogAnalyzer().analyze_uploads(files, session.get("username", ""))
     _audit("file_processing", f"Processed {len(files)} files")
     return jsonify(result)
 
@@ -220,8 +226,9 @@ def analyze_logs():
 @dashboard_bp.post("/api/clear-analysis")
 @login_required
 def clear_analysis():
-    ParsedLog.query.delete()
-    ErrorSignature.query.delete()
+    uploaded_by = session.get("username", "")
+    ParsedLog.query.filter_by(uploaded_by=uploaded_by).delete()
+    ErrorSignature.query.filter_by(uploaded_by=uploaded_by).delete()
     db.session.commit()
     _audit("clear_analysis", "Cleared parsed logs")
     return jsonify({"message": "Analysis cleared."})

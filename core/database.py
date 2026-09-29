@@ -59,6 +59,10 @@ def _apply_migrations(db):
         "ALTER TABLE users ADD COLUMN modules TEXT DEFAULT 'dashboard,recommendations'",
         "DROP TABLE IF EXISTS application_health",
         "DROP TABLE IF EXISTS learning_statistics",
+        # Scope parsed_logs/error_signatures per user so concurrent users
+        # analyzing different files don't clear each other's results.
+        "ALTER TABLE parsed_logs ADD COLUMN uploaded_by VARCHAR(80)",
+        "ALTER TABLE error_signatures ADD COLUMN uploaded_by VARCHAR(80)",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
