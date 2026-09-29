@@ -1,3 +1,6 @@
+{% if feedback_saved == loop.index0 %}
+<div class="small text-success"><i class="bi bi-check-circle-fill me-1"></i>Thanks for your feedback!</div>
+{% else %}
 <form method="post" action="{{ url_for('recommendations.submit_feedback') }}" class="d-flex align-items-center gap-2 flex-wrap">
   <input type="hidden" name="q" value="{{ query_text }}">
   <input type="hidden" name="incident" value="{{ incident_number }}">
@@ -13,3 +16,4 @@
     <i class="bi bi-hand-thumbs-down me-1"></i>Not Helpful
   </button>
 </form>
+{% endif %}
