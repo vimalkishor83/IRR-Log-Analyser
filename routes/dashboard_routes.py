@@ -113,7 +113,6 @@ def get_logs():
 @login_required
 def top_issues():
     """Return top 5 ERROR/CRITICAL issues with a probable root cause per issue."""
-    from services.log_analyzer import LogAnalyzer
     error_levels = ("ERROR", "FATAL", "CRITICAL")
 
     rows = (

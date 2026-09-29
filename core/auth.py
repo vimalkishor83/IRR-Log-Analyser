@@ -10,16 +10,19 @@ Analyst — can only access pages listed in their 'modules' field
 
 How to protect a route
 -----------------------
-    from core.auth import login_required, admin_required, module_required
+    from core.auth import login_required, role_required, module_required
 
     @app.route("/recommendations")
     @module_required("recommendations")   # only users who have this module
     def recommendations_page(): ...
 
     @app.route("/admin")
-    @admin_required                       # Admin role only
+    @role_required("Admin")               # Admin role only
     def admin_page(): ...
 """
+
+import logging
+import os
 
 from functools import wraps
 from flask import redirect, session, url_for
@@ -39,25 +42,40 @@ MODULE_LABELS = {
     "admin":           "Admin Panel",
 }
 
-# New Analyst accounts get these modules by default
-DEFAULT_ANALYST_MODULES = "dashboard,recommendations"
-
 # Admin users always get all modules
 ADMIN_MODULES = ",".join(ALL_MODULES)
 
 
 # ── Startup helper ────────────────────────────────────────────────────────────
 
-def create_default_admin():
-    """Create the built-in admin account on first startup if it doesn't exist."""
-    if not User.query.filter_by(username="admin").first():
-        db.session.add(User(
-            username="admin",
-            password=generate_password_hash("Admin@123"),
-            role="Admin",
-            modules=ADMIN_MODULES,
-        ))
-        db.session.commit()
+def create_first_admin():
+    """Create the first Admin user from environment variables, if none exists
+    yet and the required variables are set. Never hardcodes a username or
+    password -- if ADMIN_USERNAME/ADMIN_PASSWORD aren't both set, this
+    silently does nothing (fails closed: no default account is ever
+    created), and an operator sets up the first admin by setting these
+    variables once and restarting the app."""
+    if User.query.first():
+        return
+
+    username = os.environ.get("ADMIN_USERNAME")
+    password = os.environ.get("ADMIN_PASSWORD")
+    if not (username and password):
+        logging.getLogger(__name__).warning(
+            "No users exist yet and ADMIN_USERNAME/ADMIN_PASSWORD are not "
+            "both set -- skipping first-admin creation. Set both and "
+            "restart the app to create the first admin account."
+        )
+        return
+
+    db.session.add(User(
+        username=username,
+        password=generate_password_hash(password),
+        role="Admin",
+        modules=ADMIN_MODULES,
+    ))
+    db.session.commit()
+    logging.getLogger(__name__).info("First admin created: username=%s", username)
 
 
 # ── Login / logout ────────────────────────────────────────────────────────────
@@ -108,12 +126,6 @@ def role_required(role):
             return view(*args, **kwargs)
         return wrapper
     return decorator
-
-
-# Keep admin_required as a shorthand for role_required("Admin")
-def admin_required(view):
-    """Only Admin users can access this route."""
-    return role_required("Admin")(view)
 
 
 def module_required(module_key):

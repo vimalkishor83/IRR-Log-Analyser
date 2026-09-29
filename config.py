@@ -7,14 +7,21 @@ BASE_DIR = Path(__file__).resolve().parent
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
     # Database lives in data/ so it stays with the other data files
+    # SQL SERVER MIGRATION NOTE: the default below is a SQLite file URI. On
+    # SQL Server, set DATABASE_URL to a driver-based URI instead, e.g.
+    # 'mssql+pyodbc://<user>:<password>@<host>/<db>?driver=ODBC+Driver+17+for+SQL+Server'
+    # (requires the pyodbc package and an installed ODBC driver).
     _db_default = BASE_DIR / "data" / "irr_app.db"
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{_db_default}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # ServiceNow connection
-    SERVICENOW_URL      = os.getenv("SERVICENOW_URL",      "http://localhost:8080")
-    SERVICENOW_USERNAME = os.getenv("SERVICENOW_USERNAME", "admin")
-    SERVICENOW_PASSWORD = os.getenv("SERVICENOW_PASSWORD", "admin123")
+    # ServiceNow connection. No hardcoded credential defaults -- if
+    # SERVICENOW_USERNAME/SERVICENOW_PASSWORD aren't set, ServiceNowClient
+    # .is_configured() returns False and sync is skipped (with a log
+    # warning) rather than attempting a connection with a guessed default.
+    SERVICENOW_URL      = os.getenv("SERVICENOW_URL", "http://localhost:8080")
+    SERVICENOW_USERNAME = os.getenv("SERVICENOW_USERNAME", "")
+    SERVICENOW_PASSWORD = os.getenv("SERVICENOW_PASSWORD", "")
     SERVICENOW_TIMEOUT  = int(os.getenv("SERVICENOW_TIMEOUT", "15"))
     SYNC_INTERVAL_HOURS = int(os.getenv("SYNC_INTERVAL_HOURS", "24"))
 

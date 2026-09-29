@@ -9,7 +9,7 @@ Startup order:
   2. Set up rotating log files
   3. Create Flask app and connect the database
   4. Register all route blueprints
-  5. Create the default admin account (first run only)
+  5. Create the first admin account from env vars (first run only)
   6. Start the background sync scheduler
   7. Run the development server (only when called directly)
 """
@@ -20,7 +20,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from config import Config
 from core.database import init_db
 from core.logger import setup_logging
-from core.auth import create_default_admin
+from core.auth import create_first_admin
 
 log = logging.getLogger(__name__)
 
@@ -58,9 +58,9 @@ def create_app():
     def common_static(filename):
         return send_from_directory(common_static_dir, filename)
 
-    # Create default admin account on very first startup
+    # Create the first admin account from env vars, if no users exist yet
     with app.app_context():
-        create_default_admin()
+        create_first_admin()
 
     return app
 

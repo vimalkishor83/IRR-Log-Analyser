@@ -62,17 +62,6 @@ class LogAnalyzer:
         self._save_to_db(all_entries)
         return self._build_summary(all_entries, messages)
 
-    def analyze_file_bytes(self, raw_bytes, filename):
-        """
-        Parse a single file given its raw bytes and filename.
-        Used for the sample log (read from disk once at startup).
-        """
-        ext     = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-        lines   = self._decode(raw_bytes, ext)
-        entries = self._parse_lines(lines, filename)
-        self._save_to_db(entries)
-        return self._build_summary(entries, [])
-
     # ── Decoding ──────────────────────────────────────────────────────────────
 
     def _decode(self, raw_bytes, ext):
