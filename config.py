@@ -25,9 +25,7 @@ class Config:
     # Auto-delete uploaded log analysis after this many hours
     RESULTS_RETENTION_HOURS = int(os.getenv("RESULTS_RETENTION_HOURS", "72"))
 
-    # Paths
-    DATA_DIR = BASE_DIR / "data"
-    LOG_DIR  = BASE_DIR / "logs"
+    LOG_DIR = BASE_DIR / "logs"
 
     # Log rotation (read by logger_config.py)
     # LOG_MAX_BYTES    — max file size before rotation, default 5 MB

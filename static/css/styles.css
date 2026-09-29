@@ -236,12 +236,6 @@ body {
 .badge-severity.sev-INFO     { background: linear-gradient(135deg,#2563eb,#1d4ed8); }
 .badge-severity.sev-DEBUG    { background: linear-gradient(135deg,#6b7280,#4b5563); }
 
-/* ── Log viewer ──────────────────────────────────────────────────────────── */
-#logRows tr { cursor: pointer; }
-#logRows tr:hover { background: #eff6ff; }
-#logRows tr .float-end { opacity: .4; transition: opacity .15s; }
-#logRows tr:hover .float-end { opacity: 1; }
-
 /* Log table header — coloured */
 .log-table-head { background: linear-gradient(90deg, #1e3a5f, #312e81); }
 .log-table-head th { color: #cbd5e1 !important; font-size: .75rem; font-weight: 600; padding: .6rem .75rem; border: none; }
@@ -263,10 +257,6 @@ pre.stack {
   margin: -1.1rem -1.25rem .85rem;
 }
 .upload-header .irr-card-title { color: #e2e8f0; margin-bottom: 0; }
-
-/* Analyse button */
-#startAnalysis  { background: linear-gradient(135deg,#2563eb,#4f46e5); border: none; }
-#startAnalysis:hover { opacity: .9; }
 
 /* ── Form controls global colour ────────────────────────────────────────── */
 .form-control:focus, .form-select:focus {

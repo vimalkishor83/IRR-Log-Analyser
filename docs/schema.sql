@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS kb_articles (
 
 CREATE TABLE IF NOT EXISTS feedback (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    recommendation_id INTEGER,
     value VARCHAR(40),
     comments TEXT,
     created_at DATETIME
@@ -93,38 +92,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     username VARCHAR(80),
     action VARCHAR(120),
     details TEXT,
+    timestamp DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS servicenow_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(200) UNIQUE NOT NULL,
+    active BOOLEAN DEFAULT 1,
     created_at DATETIME
-);
-
-CREATE TABLE IF NOT EXISTS search_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    query_text TEXT,
-    result_count INTEGER,
-    success BOOLEAN,
-    created_at DATETIME
-);
-
-CREATE TABLE IF NOT EXISTS recommendation_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    query_text TEXT,
-    selected_source VARCHAR(80),
-    confidence_score FLOAT,
-    created_at DATETIME
-);
-
-CREATE TABLE IF NOT EXISTS application_health (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    application VARCHAR(120) UNIQUE,
-    health_score FLOAT,
-    error_count INTEGER,
-    critical_count INTEGER,
-    incident_count INTEGER,
-    updated_at DATETIME
-);
-
-CREATE TABLE IF NOT EXISTS learning_statistics (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    metric_name VARCHAR(120),
-    metric_value FLOAT,
-    updated_at DATETIME
 );
