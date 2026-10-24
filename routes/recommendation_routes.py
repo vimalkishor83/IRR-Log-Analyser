@@ -4,10 +4,11 @@ import logging
 
 from flask import Blueprint, redirect, render_template, request, url_for
 
-from core.audit import log_action as _audit
-from core.auth import login_required, module_required
-from core.database import db
-from core.models import Feedback, Incident
+from services.audit_service import log_action as _audit
+from services.auth_service import login_required, module_required
+from db import db
+from models.feedback import Feedback
+from models.incident import Incident
 from services.recommendation import RecommendationEngine
 from services.snow_client import ServiceNowClient
 
@@ -25,10 +26,9 @@ def recommendations_page():
     if not query_text and not incident_number:
         return render_template("recommendations.html", searched=False)
 
-    live_incident = None  # details about an open/in-progress incident from SNOW
+    live_incident = None
 
-    # If the incident is not in our local DB (open or in-progress),
-    # fetch it live from ServiceNow and use its description as the search text.
+    # Incident not in local DB (open/in-progress) — fetch live from ServiceNow
     if incident_number and not Incident.query.filter_by(incident_number=incident_number).first():
         from flask import current_app
         snow = ServiceNowClient(current_app.config)

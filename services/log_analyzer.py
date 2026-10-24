@@ -1,13 +1,13 @@
 """Parses uploaded log files in memory and saves results to the database."""
 
 import gzip
-import io
 import re
 from collections import Counter
 from datetime import datetime, timedelta
 
-from core.database import db
-from core.models import ErrorSignature, ParsedLog
+from db import db
+from models.error_signature import ErrorSignature
+from models.parsed_log import ParsedLog
 
 LOG_PATTERN = re.compile(
     r"(?P<timestamp>\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})?.*?"
@@ -38,7 +38,7 @@ class LogAnalyzer:
                 continue
 
             try:
-                raw_bytes = upload.read()  # read once into memory
+                raw_bytes = upload.read()
                 lines     = self._decode(raw_bytes, ext)
                 entries   = self._parse_lines(lines, name)
                 all_entries.extend(entries)
@@ -58,7 +58,7 @@ class LogAnalyzer:
     def _parse_lines(self, lines, source_name):
         """Parse a list of text lines and return a list of entry dicts."""
         entries = []
-        current = None  # last entry — used to attach stack trace lines
+        current = None
 
         for line_num, raw in enumerate(lines, start=1):
             line = raw.rstrip("\n")
@@ -155,42 +155,31 @@ class LogAnalyzer:
             "records":             entries[:500],
         }
 
-    # Pattern → human-readable root cause (checked in order; first match wins)
+    # Checked in order; first match wins
     _ROOT_CAUSE_PATTERNS = [
-        # Database
         (r"ora-12541|tns.?no.?listener|listener.*down",         "Database listener is down — restart Oracle listener service"),
         (r"ora-\d{4,5}",                                        "Oracle database error — check alert log for details"),
         (r"deadlock|lock.wait.timeout",                         "Database deadlock or lock wait timeout detected"),
         (r"too many connections|max_connections",               "Database connection pool exhausted"),
-        # Memory
         (r"outofmemory|java.lang.outofmemoryerror",            "JVM heap memory exhausted — increase -Xmx or fix memory leak"),
         (r"gc overhead limit exceeded",                         "Excessive garbage collection — JVM running out of heap"),
         (r"stack.*overflow|stackoverflowerror",                 "Stack overflow — likely infinite recursion in application code"),
-        # Connectivity
         (r"connection refused|econnrefused",                    "Service or port unreachable — target host/port not accepting connections"),
         (r"connection.?timed?.?out|connect timeout",            "Network connection timeout — service too slow or firewall blocking"),
         (r"no route to host|network unreachable",               "Network routing failure — check firewall or DNS configuration"),
-        # SSL/TLS
         (r"ssl.*expired|certificate.*expired|handshake.*fail", "SSL/TLS certificate expired or handshake failure"),
         (r"ssl.*exception|sslhandshakeexception",              "SSL handshake error — certificate mismatch or protocol incompatibility"),
-        # Auth
         (r"authentication.*fail|login.*fail|invalid credentials|access denied", "Authentication failure — check credentials or account lockout"),
         (r"permission denied|unauthori[zs]ed|403",             "Authorisation error — insufficient permissions for the requested resource"),
-        # Disk / IO
         (r"no space left|disk.?full|disk.?space",              "Disk space exhausted — free up space or expand the volume"),
         (r"read.?only file system|read.?only.*disk",           "Filesystem mounted read-only — check for disk errors or forced remount"),
         (r"ioexception|i/o error|input/output error",          "I/O error — check disk health and file system integrity"),
-        # Threads / timeouts
         (r"thread.*pool.*exhausted|no.?thread.*available",     "Thread pool exhausted — application under heavy load or thread leak"),
         (r"timeout|timed.?out",                                "Operation timeout — backend service slow to respond"),
-        # Null / NPE
         (r"nullpointerexception|null reference|object reference not set", "Null pointer exception — application attempting to use uninitialised object"),
-        # HTTP
         (r"http.*5[0-9]{2}|internal server error",             "HTTP 5xx server error returned from downstream service"),
         (r"http.*4[0-9]{2}",                                   "HTTP 4xx client error — check request payload or authentication"),
-        # Batch / ETL
         (r"batch.*fail|etl.*fail|job.*fail",                   "Batch/ETL job failed — check scheduler logs for detailed error"),
-        # Config
         (r"configuration.*error|config.*missing|property.*not found", "Configuration error — missing or invalid application property"),
     ]
 
@@ -198,17 +187,16 @@ class LogAnalyzer:
         if not entries:
             return "No errors found."
 
-        # Sort by timestamp; prefer earlier entries (first symptom)
+        # Prefer earlier entries (first symptom)
         sorted_entries = sorted(entries, key=lambda e: e["timestamp"] or datetime.min)
 
-        # Try to find a pattern match scanning from the first error
         for entry in sorted_entries:
             text = (entry["message"] + " " + (entry["exception"] or "") + " " + (entry["error_code"] or "")).lower()
             for pattern, label in self._ROOT_CAUSE_PATTERNS:
                 if re.search(pattern, text):
                     return label
 
-        # Fall back to the signature of the most frequent error
+        # Fallback: signature of the most frequent error
         sig_counts = Counter(e["signature"] for e in entries)
         most_common_sig = sig_counts.most_common(1)[0][0]
         return most_common_sig

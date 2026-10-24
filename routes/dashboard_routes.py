@@ -1,17 +1,17 @@
 """Log Analyzer dashboard — page + its log-viewer routes."""
 
-import logging
-
 from flask import Blueprint, redirect, render_template, request, session, url_for
 from sqlalchemy import func
 
-from core.audit import log_action as _audit
-from core.auth import login_required, module_required
-from core.database import db
-from core.models import ErrorSignature, Incident, KBArticle, ParsedLog
+from services.audit_service import log_action as _audit
+from services.auth_service import login_required, module_required
+from db import db
+from models.error_signature import ErrorSignature
+from models.incident import Incident
+from models.kb_article import KBArticle
+from models.parsed_log import ParsedLog
 from services.log_analyzer import LogAnalyzer
 
-log = logging.getLogger(__name__)
 dashboard_bp = Blueprint("dashboard", __name__)
 
 PER_PAGE = 100
@@ -58,7 +58,6 @@ def analyze_logs():
     if not files or not any(f.filename for f in files):
         return redirect(url_for("dashboard.index", message="Please select at least one log file."))
 
-    # Files are read into memory and parsed — nothing is written to disk
     result = LogAnalyzer().analyze_uploads(files, session.get("username", ""))
     _audit("file_processing", f"Processed {len(files)} files")
     messages = result.get("messages") or []

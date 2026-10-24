@@ -1,14 +1,9 @@
 """Login, logout, and page-level access control."""
 
-import logging
-import os
-
 from functools import wraps
 from flask import redirect, session, url_for
-from werkzeug.security import check_password_hash, generate_password_hash
 
-from core.database import db
-from core.models import User
+from models.user import User
 
 # All module keys that exist in the application
 ALL_MODULES = ["dashboard", "recommendations", "knowledge", "admin"]
@@ -25,43 +20,31 @@ MODULE_LABELS = {
 ADMIN_MODULES = ",".join(ALL_MODULES)
 
 
-def create_first_admin():
-    """Create the first admin from env vars if no users exist yet."""
-    if User.query.first():
-        return
-
-    username = os.environ.get("ADMIN_USERNAME")
-    password = os.environ.get("ADMIN_PASSWORD")
-    if not (username and password):
-        logging.getLogger(__name__).warning("ADMIN_USERNAME/ADMIN_PASSWORD not set, skipping first-admin creation")
-        return
-
-    db.session.add(User(
-        username=username,
-        password=generate_password_hash(password),
-        role="Admin",
-        modules=ADMIN_MODULES,
-    ))
-    db.session.commit()
-    logging.getLogger(__name__).info("First admin created: username=%s", username)
-
-
 def login_user(username, password):
     """Check credentials and store user info in the session."""
     user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password, password):
+    if not user or not user.check_password(password):
         return False
 
     session["username"] = user.username
     session["role"]     = user.role
-    session["modules"]  = ADMIN_MODULES if user.role == "Admin" else (user.modules or "")
+    session["modules"]  = ADMIN_MODULES if user.is_admin() else (user.modules or "")
     return True
+
+
+def parse_modules(raw):
+    """Split a comma-separated modules string into a clean list."""
+    return [m.strip() for m in (raw or "").split(",") if m.strip()]
 
 
 def get_current_modules():
     """Return the logged-in user's allowed modules as a list."""
-    raw = session.get("modules", "")
-    return [m.strip() for m in raw.split(",") if m.strip()]
+    return parse_modules(session.get("modules", ""))
+
+
+def user_modules(user):
+    """Return a user's allowed modules as a list. Admins always get all modules."""
+    return ALL_MODULES if user.is_admin() else parse_modules(user.modules)
 
 
 def login_required(view):
@@ -89,10 +72,7 @@ def role_required(role):
 
 
 def module_required(module_key):
-    """
-    Only users who have the given module can access this route.
-    Admin users always pass through.
-    """
+    """Only users who have the given module can access this route. Admin users always pass through."""
     def decorator(view):
         @wraps(view)
         def wrapper(*args, **kwargs):

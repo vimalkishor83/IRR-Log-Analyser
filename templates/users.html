@@ -68,6 +68,7 @@
                             {% else %}
                                 <form method="post" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
                                       class="d-inline" onsubmit="return confirm('Delete user \'{{ user.username }}\'? This cannot be undone.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>
                             {% endif %}

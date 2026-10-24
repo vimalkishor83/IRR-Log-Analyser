@@ -5,15 +5,24 @@ import io
 import logging
 
 from flask import Blueprint, Response, redirect, render_template, request, url_for
-from werkzeug.security import generate_password_hash
 
-from core.audit import log_action as _audit
-from core.auth import ALL_MODULES, MODULE_LABELS, login_required, role_required
-from core.database import db
-from core.models import Incident, KBArticle, ServiceNowGroup, SyncHistory, User
+from services.audit_service import log_action as _audit
+from services.auth_service import ADMIN_MODULES, ALL_MODULES, MODULE_LABELS, role_required, user_modules
+from db import db
+from models.incident import Incident
+from models.kb_article import KBArticle
+from models.servicenow_group import ServiceNowGroup
+from models.sync_history import SyncHistory
+from models.user import User
 
 log = logging.getLogger(__name__)
 admin_bp = Blueprint("admin", __name__)
+
+INCIDENT_CSV_FIELDS = [
+    "incident_number", "application", "server", "environment",
+    "error_description", "exception_message", "root_cause",
+    "resolution", "assignment_group", "status",
+]
 
 
 @admin_bp.get("/admin")
@@ -28,25 +37,26 @@ def admin_page():
     )
 
 
+def _module_options():
+    return [{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES]
+
+
 @admin_bp.get("/admin/users")
 @role_required("Admin")
 def users_page():
     users = User.query.all()
     for u in users:
-        u.module_list = ALL_MODULES if u.role == "Admin" else \
-            [m.strip() for m in (u.modules or "").split(",") if m.strip()]
-    modules = [{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES]
-    return render_template("users.html", users=users, modules=modules,
+        u.module_list = user_modules(u)
+    return render_template("users.html", users=users, modules=_module_options(),
                             status=request.args.get("status"), error=request.args.get("error"))
 
 
 @admin_bp.get("/admin/users/add")
 @role_required("Admin")
 def add_user_form():
-    modules = [{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES]
     role = request.args.get("role", "Analyst")
     selected = ALL_MODULES if role == "Admin" else request.args.getlist("modules")
-    return render_template("user_form.html", user=None, modules=modules,
+    return render_template("user_form.html", user=None, modules=_module_options(),
                             selected_modules=selected, role=role)
 
 
@@ -54,14 +64,12 @@ def add_user_form():
 @role_required("Admin")
 def edit_user_form(user_id):
     user = User.query.get_or_404(user_id)
-    modules = [{"key": k, "label": MODULE_LABELS[k]} for k in ALL_MODULES]
     role = request.args.get("role", user.role)
     if "role" in request.args:
         selected = ALL_MODULES if role == "Admin" else request.args.getlist("modules")
     else:
-        selected = ALL_MODULES if user.role == "Admin" else \
-            [m.strip() for m in (user.modules or "").split(",") if m.strip()]
-    return render_template("user_form.html", user=user, modules=modules,
+        selected = user_modules(user)
+    return render_template("user_form.html", user=user, modules=_module_options(),
                             selected_modules=selected, role=role)
 
 
@@ -78,12 +86,8 @@ def create_user():
     if User.query.filter_by(username=username).first():
         return redirect(url_for("admin.users_page", error="Username already exists."))
 
-    user = User(
-        username = username,
-        password = generate_password_hash(password),
-        role     = role,
-        modules  = _modules_str(role, modules),
-    )
+    user = User(username=username, role=role, modules=_modules_str(role, modules))
+    user.set_password(password)
     db.session.add(user)
     db.session.commit()
     _audit("create_user", user.username)
@@ -99,7 +103,7 @@ def update_user(user_id):
     modules  = request.form.getlist("modules")
 
     if password:
-        user.password = generate_password_hash(password)
+        user.set_password(password)
     user.role    = role
     user.modules = _modules_str(role, modules)
     db.session.commit()
@@ -167,11 +171,7 @@ def import_csv_now():
 @role_required("Admin")
 def download_import_template():
     """Download a sample CSV showing the expected columns for incident import."""
-    headers = [
-        "incident_number", "application", "server", "environment",
-        "error_description", "exception_message", "root_cause",
-        "resolution", "assignment_group", "status",
-    ]
+    headers = INCIDENT_CSV_FIELDS
     examples = [
         ["INC0001001", "OrderService", "app-server-01", "Production",
          "ORA-12541: TNS no listener", "java.sql.SQLException: Listener refused connection",
@@ -231,7 +231,7 @@ def _status_data():
     """Build the system-status dict shown on the admin page and index status panel."""
     from flask import current_app
     from services import tfidf_engine
-    from core.models import KnowledgeEntry
+    from models.knowledge_entry import KnowledgeEntry
 
     def last_sync(source):
         record = SyncHistory.query.filter_by(source=source).order_by(SyncHistory.last_sync_time.desc()).first()
@@ -261,7 +261,6 @@ def _status_data():
 
 def _modules_str(role, selected_modules):
     """Comma-separated module list for storage. Admin role always gets all modules."""
-    from core.auth import ADMIN_MODULES
     if role == "Admin":
         return ADMIN_MODULES
     return ",".join(m for m in selected_modules if m in ALL_MODULES)
@@ -270,7 +269,7 @@ def _modules_str(role, selected_modules):
 def _rebuild_index():
     """Rebuild the TF-IDF search index from all DB data. Returns document count."""
     from services import tfidf_engine
-    from core.models import KnowledgeEntry
+    from models.knowledge_entry import KnowledgeEntry
     incidents    = Incident.query.all()
     kb_articles  = KBArticle.query.filter_by(active=True).all()
     knowledge    = KnowledgeEntry.query.filter_by(active=True).all()
@@ -278,16 +277,8 @@ def _rebuild_index():
 
 
 def _import_incidents_csv(raw_bytes):
-    """
-    Parse CSV from raw bytes and insert new incidents into the DB.
-    Returns (imported_count, skipped_count).
-    Nothing is written to disk.
-    """
-    allowed_fields = {
-        "incident_number", "application", "server", "environment",
-        "error_description", "exception_message", "root_cause",
-        "resolution", "assignment_group", "status",
-    }
+    """Parse CSV from raw bytes and insert new incidents into the DB. Returns (imported_count, skipped_count)."""
+    allowed_fields = set(INCIDENT_CSV_FIELDS)
     imported = skipped = 0
     text = raw_bytes.decode("utf-8-sig", errors="ignore")
     for row in csv.DictReader(io.StringIO(text)):

@@ -2,6 +2,7 @@
 <div class="small text-success"><i class="bi bi-check-circle-fill me-1"></i>Thanks for your feedback!</div>
 {% else %}
 <form method="post" action="{{ url_for('recommendations.submit_feedback') }}" class="d-flex align-items-center gap-2 flex-wrap">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="q" value="{{ query_text }}">
   <input type="hidden" name="incident" value="{{ incident_number }}">
   <input type="hidden" name="sort" value="{{ sort_by }}">

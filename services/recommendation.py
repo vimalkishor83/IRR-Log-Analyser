@@ -2,8 +2,10 @@
 
 from difflib import SequenceMatcher
 
-from core.database import db
-from core.models import Feedback, Incident, KBArticle, KnowledgeEntry
+from models.feedback import Feedback
+from models.incident import Incident
+from models.kb_article import KBArticle
+from models.knowledge_entry import KnowledgeEntry
 from services import tfidf_engine
 
 
@@ -16,23 +18,20 @@ class RecommendationEngine:
 
         candidates = []
 
-        # Step 1: exact match by incident number
         if incident_number:
             inc = Incident.query.filter_by(incident_number=incident_number).first()
             if inc:
                 candidates.append(self._incident_result(inc, 100, "Exact incident match", helpful, not_helpful))
 
-        # Step 2: TF-IDF search (requires retrain() to have been called)
         if tfidf_engine.is_trained():
             candidates.extend(self._tfidf_search(query_text, helpful, not_helpful))
         else:
-            # Step 3: fallback — compare text directly (slower but always works)
+            # Fallback: direct text comparison, slower but always works
             candidates.extend(self._fuzzy_search(query_text, helpful, not_helpful))
 
-        # Sort best results first
         candidates.sort(key=lambda r: (r["confidence"], r["similarity"]), reverse=True)
 
-        # Remove duplicates — keep the highest-scoring entry per incident
+        # Keep only the highest-scoring entry per incident
         seen   = set()
         unique = []
         for item in candidates:
@@ -63,7 +62,7 @@ class RecommendationEngine:
 
     def _fuzzy_search(self, query_text, helpful, not_helpful):
         candidates = []
-        min_score  = 25  # ignore anything below 25% similar
+        min_score  = 25
 
         for inc in Incident.query.all():
             text  = " ".join([inc.error_description or "", inc.exception_message or "", inc.root_cause or ""])

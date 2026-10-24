@@ -1,7 +1,7 @@
 """CRUD operations for the manually-maintained Knowledge Repository."""
 
-from core.database import db
-from core.models import KnowledgeEntry
+from db import db
+from models.knowledge_entry import KnowledgeEntry
 
 
 class KnowledgeService:

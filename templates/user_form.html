@@ -19,22 +19,23 @@
 
     <div class="panel p-4">
         <form method="post" action="{{ url_for('admin.update_user', user_id=user.id) if user else url_for('admin.create_user') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="mb-3">
-                <label class="form-label">Username {% if not user %}<span class="text-danger">*</span>{% endif %}</label>
-                <input name="username" class="form-control" placeholder="e.g. john.doe"
+                <label class="form-label" for="user_username">Username {% if not user %}<span class="text-danger">*</span>{% endif %}</label>
+                <input id="user_username" name="username" class="form-control" placeholder="e.g. john.doe"
                        {% if user %}value="{{ user.username }}" disabled{% endif %}>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Password {% if not user %}<span class="text-danger">*</span>{% endif %}</label>
-                <input name="password" class="form-control" type="password" placeholder="Enter password">
+                <label class="form-label" for="user_password">Password {% if not user %}<span class="text-danger">*</span>{% endif %}</label>
+                <input id="user_password" name="password" class="form-control" type="password" placeholder="Enter password">
                 {% if user %}<div class="form-text">Leave blank to keep the current password.</div>{% endif %}
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Role <span class="text-danger">*</span></label>
-                <select name="role" class="form-select">
+                <label class="form-label" for="user_role">Role <span class="text-danger">*</span></label>
+                <select id="user_role" name="role" class="form-select">
                     <option value="Analyst" {% if role == 'Analyst' %}selected{% endif %}>Analyst</option>
                     <option value="Admin" {% if role == 'Admin' %}selected{% endif %}>Admin</option>
                 </select>

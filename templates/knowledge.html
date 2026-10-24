@@ -97,43 +97,44 @@
       </div>
     </div>
     <form class="kb-add-body" method="post" action="{{ url_for('knowledge.add_knowledge') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="filter" value="{{ status_filter }}">
       <input type="hidden" name="search" value="{{ search }}">
       <div class="row g-3">
 
         <!-- Error Pattern -->
         <div class="col-md-6 col-lg-3">
-          <label class="form-label fw-semibold" style="font-size:.85rem">
+          <label class="form-label fw-semibold" style="font-size:.85rem" for="kb_pattern">
             <i class="bi bi-bug me-1 text-danger"></i>Error Pattern <span class="text-danger">*</span>
           </label>
-          <input name="pattern" required class="form-control form-control-sm"
+          <input id="kb_pattern" name="pattern" required class="form-control form-control-sm"
                  placeholder="e.g. ORA-12541, NullPointerException" maxlength="120">
         </div>
 
         <!-- Meaning / Root Cause -->
         <div class="col-md-6 col-lg-3">
-          <label class="form-label fw-semibold" style="font-size:.85rem">
+          <label class="form-label fw-semibold" style="font-size:.85rem" for="kb_meaning">
             <i class="bi bi-lightbulb me-1 text-warning"></i>Meaning / Root Cause <span class="text-danger">*</span>
           </label>
-          <input name="meaning" required class="form-control form-control-sm"
+          <input id="kb_meaning" name="meaning" required class="form-control form-control-sm"
                  placeholder="Brief description of what this error means" maxlength="200">
         </div>
 
         <!-- Resolution -->
         <div class="col-md-8 col-lg-4">
-          <label class="form-label fw-semibold" style="font-size:.85rem">
+          <label class="form-label fw-semibold" style="font-size:.85rem" for="kb_resolution">
             <i class="bi bi-tools me-1 text-success"></i>Resolution <span class="text-danger">*</span>
           </label>
-          <textarea name="resolution" required class="form-control form-control-sm" rows="2"
+          <textarea id="kb_resolution" name="resolution" required class="form-control form-control-sm" rows="2"
                     placeholder="Step-by-step fix or workaround…" maxlength="500"></textarea>
         </div>
 
         <!-- Assignment Group -->
         <div class="col-md-4 col-lg-2">
-          <label class="form-label fw-semibold" style="font-size:.85rem">
+          <label class="form-label fw-semibold" style="font-size:.85rem" for="kb_group">
             <i class="bi bi-people me-1 text-secondary"></i>Group
           </label>
-          <input name="assignment_group" class="form-control form-control-sm"
+          <input id="kb_group" name="assignment_group" class="form-control form-control-sm"
                  placeholder="e.g. DBA Team" maxlength="80">
           <div class="form-text" style="font-size:.72rem;margin-top:2px;">Optional</div>
         </div>
@@ -171,7 +172,7 @@
         <form class="input-group input-group-sm" style="width:220px;" method="get" action="{{ url_for('knowledge.knowledge_page') }}">
           <input type="hidden" name="filter" value="{{ status_filter }}">
           <span class="input-group-text"><i class="bi bi-search"></i></span>
-          <input name="search" type="text" class="form-control" placeholder="Search…" value="{{ search }}">
+          <input id="kb_search" name="search" type="text" class="form-control" placeholder="Search…" value="{{ search }}" aria-label="Search knowledge entries">
           {% if search %}
           <a class="btn btn-outline-secondary" href="{{ url_for('knowledge.knowledge_page', filter=status_filter) }}" title="Clear">&#x2715;</a>
           {% endif %}
@@ -209,6 +210,7 @@
           </div>
           <div class="d-flex gap-1 flex-shrink-0 flex-wrap">
             <form method="post" action="{{ url_for('knowledge.deactivate_knowledge' if row.active else 'knowledge.activate_knowledge', entry_id=row.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="filter" value="{{ status_filter }}">
               <input type="hidden" name="search" value="{{ search }}">
               {% if row.active %}
@@ -223,6 +225,7 @@
             </a>
             <form method="post" action="{{ url_for('knowledge.delete_knowledge', entry_id=row.id) }}"
                   onsubmit="return confirm('Permanently delete this entry? This cannot be undone.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="filter" value="{{ status_filter }}">
               <input type="hidden" name="search" value="{{ search }}">
               <button class="btn btn-sm btn-outline-danger" style="font-size:.75rem;padding:.2rem .6rem"><i class="bi bi-trash me-1"></i>Delete</button>
@@ -232,24 +235,25 @@
 
         {% if edit_id == row.id %}
         <form class="kb-edit-form" method="post" action="{{ url_for('knowledge.update_knowledge', entry_id=row.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="filter" value="{{ status_filter }}">
           <input type="hidden" name="search" value="{{ search }}">
           <div class="row g-2">
             <div class="col-md-3">
-              <label class="form-label small fw-semibold">Error Pattern</label>
-              <input name="pattern" required class="form-control form-control-sm" value="{{ row.pattern }}" maxlength="120">
+              <label class="form-label small fw-semibold" for="kb_edit_pattern_{{ row.id }}">Error Pattern</label>
+              <input id="kb_edit_pattern_{{ row.id }}" name="pattern" required class="form-control form-control-sm" value="{{ row.pattern }}" maxlength="120">
             </div>
             <div class="col-md-3">
-              <label class="form-label small fw-semibold">Meaning / Root Cause</label>
-              <input name="meaning" required class="form-control form-control-sm" value="{{ row.meaning }}" maxlength="200">
+              <label class="form-label small fw-semibold" for="kb_edit_meaning_{{ row.id }}">Meaning / Root Cause</label>
+              <input id="kb_edit_meaning_{{ row.id }}" name="meaning" required class="form-control form-control-sm" value="{{ row.meaning }}" maxlength="200">
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Resolution</label>
-              <textarea name="resolution" required class="form-control form-control-sm" rows="2" maxlength="500">{{ row.resolution }}</textarea>
+              <label class="form-label small fw-semibold" for="kb_edit_resolution_{{ row.id }}">Resolution</label>
+              <textarea id="kb_edit_resolution_{{ row.id }}" name="resolution" required class="form-control form-control-sm" rows="2" maxlength="500">{{ row.resolution }}</textarea>
             </div>
             <div class="col-md-2">
-              <label class="form-label small fw-semibold">Group</label>
-              <input name="assignment_group" class="form-control form-control-sm" value="{{ row.assignment_group or '' }}" maxlength="80">
+              <label class="form-label small fw-semibold" for="kb_edit_group_{{ row.id }}">Group</label>
+              <input id="kb_edit_group_{{ row.id }}" name="assignment_group" class="form-control form-control-sm" value="{{ row.assignment_group or '' }}" maxlength="80">
             </div>
           </div>
           <div class="mt-2 d-flex gap-2">

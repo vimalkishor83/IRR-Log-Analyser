@@ -1,8 +1,8 @@
 """Login and logout pages."""
 
 from flask import Blueprint, redirect, render_template, request, session, url_for
-from core.audit import log_action as _audit
-from core.auth import login_user
+from services.audit_service import log_action as _audit
+from services.auth_service import login_user
 
 auth_bp = Blueprint("auth", __name__)
 

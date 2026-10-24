@@ -290,6 +290,7 @@
       {% endif %}
 
       <form method="post" autocomplete="on">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="field">
           <label for="username">Username</label>
           <div class="field-wrap">

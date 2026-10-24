@@ -1,52 +1,104 @@
 """Application entry point."""
 
 import logging
+import os
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from config import Config
-from core.database import init_db
-from core.logger import setup_logging
-from core.auth import create_first_admin
+from db import db, apply_schema
 
 log = logging.getLogger(__name__)
 
 
+def _create_first_admin():
+    """Create the first admin from env vars if no users exist yet."""
+    from models.user import User
+    from services.auth_service import ADMIN_MODULES
+
+    if User.query.first():
+        return
+
+    username = os.environ.get('ADMIN_USERNAME')
+    password = os.environ.get('ADMIN_PASSWORD')
+    if not (username and password):
+        logging.getLogger(__name__).warning(
+            'ADMIN_USERNAME/ADMIN_PASSWORD not set, skipping first-admin creation'
+        )
+        return
+
+    admin = User(username=username, role='Admin', modules=ADMIN_MODULES)
+    admin.set_password(password)
+    db.session.add(admin)
+    db.session.commit()
+    logging.getLogger(__name__).info('First admin created: username=%s', username)
+
+
+def setup_logging():
+    """Set up file logging. Size-based by default, or time-based via LOG_ROTATE_WHEN. Call this once at application startup."""
+    log_dir = os.path.join(os.path.dirname(__file__), 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+
+    max_bytes    = int(os.getenv("LOG_MAX_BYTES", str(5 * 1024 * 1024)))
+    backup_count = int(os.getenv("LOG_BACKUP_COUNT", "10"))
+    rotate_when  = os.getenv("LOG_ROTATE_WHEN", "")
+
+    log_file = os.path.join(log_dir, "application.log")
+
+    if rotate_when:
+        handler = TimedRotatingFileHandler(
+            log_file, when=rotate_when, backupCount=backup_count, encoding="utf-8"
+        )
+    else:
+        handler = RotatingFileHandler(
+            log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
+        )
+
+    handler.setFormatter(logging.Formatter(
+        "%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    ))
+
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    if not root.handlers:
+        root.addHandler(handler)
+
+
 def create_app():
     """Build and configure the Flask application."""
-    import os
     from flask import Flask, send_from_directory
+    from flask_wtf import CSRFProtect
 
     app = Flask(__name__)
 
     # Behind a reverse proxy under a path prefix (Caddy sets X-Forwarded-Prefix). No effect when served at root.
-
     from werkzeug.middleware.proxy_fix import ProxyFix
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     app.config.from_object(Config)
 
-    # Set up log file rotation before anything else logs
-    setup_logging(app.config["LOG_DIR"])
+    # No AJAX/JSON endpoints exist in this app, so no @csrf.exempt is needed
+    CSRFProtect(app)
 
-    # Connect SQLAlchemy to this app and run any pending migrations
-    init_db(app)
+    setup_logging()
 
-    # Register all route blueprints
+    os.makedirs(os.path.join(os.path.dirname(__file__), 'data'), exist_ok=True)
+
+    db.init_app(app)
+    apply_schema(app)
     _register_blueprints(app)
 
-    # Shared, pre-built library files (Bootstrap, Chart.js), bind-mounted
-    # read-only at /common-static from the host's
-    # /home/claudedev/office/common-static -- one copy shared across office
-    # apps instead of each app vendoring its own.
+    # Shared lib files (Bootstrap, Chart.js) bind-mounted read-only, one copy across office apps
     common_static_dir = os.environ.get("COMMON_STATIC_DIR", "/common-static")
 
     @app.route("/common-static/<path:filename>")
     def common_static(filename):
         return send_from_directory(common_static_dir, filename)
 
-    # Create the first admin account from env vars, if no users exist yet
     with app.app_context():
-        create_first_admin()
+        db.create_all()
+        _create_first_admin()
 
     return app
 

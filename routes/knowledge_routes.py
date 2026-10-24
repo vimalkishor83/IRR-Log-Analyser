@@ -2,8 +2,8 @@
 
 from flask import Blueprint, redirect, render_template, request, url_for
 
-from core.audit import log_action as _audit
-from core.auth import module_required
+from services.audit_service import log_action as _audit
+from services.auth_service import module_required
 from services.knowledge_service import KnowledgeService
 
 knowledge_bp = Blueprint("knowledge", __name__)

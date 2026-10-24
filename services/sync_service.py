@@ -4,8 +4,10 @@ import logging
 import re
 from datetime import datetime
 
-from core.database import db
-from core.models import Incident, KBArticle, SyncHistory
+from db import db
+from models.incident import Incident
+from models.kb_article import KBArticle
+from models.sync_history import SyncHistory
 from services.snow_client import ServiceNowClient
 
 log = logging.getLogger(__name__)
@@ -42,9 +44,8 @@ class SyncService:
 
             imported      = 0
             updated       = 0
-            skip_reasons  = {}  # { reason_category: count }
+            skip_reasons  = {}
 
-            # Pre-load resolution texts to detect copy-paste duplicates (validation 4)
             resolution_counts = _count_existing_resolutions()
 
             for row in rows:
@@ -75,8 +76,6 @@ class SyncService:
                 item.updated_at        = datetime.utcnow()
 
                 db.session.add(item)
-
-                # Track this resolution so further duplicates get caught
                 resolution_counts[resolution] = resolution_counts.get(resolution, 0) + 1
 
                 if is_new:
@@ -149,7 +148,6 @@ class SyncService:
         state       = (row.get("state") or "").strip().lower()
         group       = (row.get("assignment_group") or "").strip().lower()
 
-        # Rule 1 — required fields must exist
         if not number:
             return "missing incident number"
         if not description:
@@ -157,32 +155,28 @@ class SyncService:
         if not resolution:
             return "missing resolution (close_notes)"
 
-        # Rule 2 — minimum useful length
         if len(description) < 10:
             return f"description too short ({len(description)} chars)"
         if len(resolution) < 20:
             return f"resolution too short ({len(resolution)} chars)"
 
-        # Rule 3 — reject junk / placeholder text
         if _is_junk(description):
             return f"junk description: '{description[:40]}'"
         if _is_junk(resolution):
             return f"junk resolution: '{resolution[:40]}'"
 
-        # Rule 4 — reject copy-paste resolutions (same text on 5+ records)
+        # Reject copy-paste resolutions (same text on 5+ records)
         count = resolution_counts.get(resolution, 0)
         if count >= MAX_DUPLICATE_RESOLUTIONS:
             return f"duplicate resolution used {count} times already"
 
-        # Rule 5 — state must actually be resolved or closed
         if state and state not in VALID_STATES:
             return f"unexpected state: '{state}'"
 
-        # Rule 6 — assignment group must be in the allowed list (if configured)
         if self.allowed_groups and group not in self.allowed_groups:
             return f"group '{group}' not in allowed list"
 
-        return None  # all checks passed
+        return None
 
     def _record_sync(self, source, status, message):
         """Save one sync result row so admins can see the last sync outcome."""
@@ -210,10 +204,8 @@ def _is_junk(text):
     if not text:
         return True
     normalised = text.strip().lower()
-    # Exact match
     if normalised in JUNK_PHRASES:
         return True
-    # Very short and only letters/punctuation — likely meaningless
     if len(normalised) < 5 and not any(c.isdigit() for c in normalised):
         return True
     return False

@@ -7,10 +7,7 @@ from requests.auth import HTTPBasicAuth
 
 log = logging.getLogger(__name__)
 
-# These are the states we treat as "done" and worth syncing
 RESOLVED_STATES = ["Resolved", "Closed"]
-
-# How many records to pull per API call
 PAGE_SIZE = 100
 
 
@@ -36,7 +33,7 @@ class ServiceNowClient:
         self._ensure_token()
 
         all_incidents = []
-        seen_numbers  = set()  # avoid duplicates if groups overlap
+        seen_numbers  = set()
 
         for query in self._build_queries(assignment_groups):
             batch = self._get_all_pages(
@@ -116,7 +113,7 @@ class ServiceNowClient:
             all_records.extend(batch)
 
             if len(batch) < PAGE_SIZE:
-                break  # reached the last page
+                break
 
             offset += PAGE_SIZE
 
@@ -125,7 +122,7 @@ class ServiceNowClient:
     def _ensure_token(self):
         """Try to get a JWT token. Silently skip if the endpoint doesn't exist."""
         if self._token:
-            return  # already have one
+            return
 
         try:
             resp = requests.post(

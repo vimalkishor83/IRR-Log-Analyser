@@ -26,20 +26,22 @@
               Selection</div>
           </div>
           <form method="post" action="{{ url_for('dashboard.analyze_logs') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
-              <label class="form-label small text-muted mb-1">Single or multiple log files</label>
-              <input name="files" class="form-control form-control-sm" type="file" multiple
+              <label class="form-label small text-muted mb-1" for="files_multi">Single or multiple log files</label>
+              <input id="files_multi" name="files" class="form-control form-control-sm" type="file" multiple
                 accept=".log,.txt,.out,.csv,.gz">
               <div class="form-text">Supported: .log .txt .out .csv .gz</div>
             </div>
             <div class="mb-3">
-              <label class="form-label small text-muted mb-1">Complete folder</label>
-              <input name="files" class="form-control form-control-sm" type="file" webkitdirectory multiple>
+              <label class="form-label small text-muted mb-1" for="files_folder">Complete folder</label>
+              <input id="files_folder" name="files" class="form-control form-control-sm" type="file" webkitdirectory multiple>
               <div class="form-text">Logs inside a single folder</div>
             </div>
             <button class="btn btn-primary btn-sm"><i class="bi bi-play-fill me-1"></i>Analyse</button>
           </form>
           <form method="post" action="{{ url_for('dashboard.clear_analysis') }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-outline-secondary btn-sm mt-2"><i class="bi bi-x-circle me-1"></i>Clear</button>
           </form>
           {% if message %}<div class="small text-secondary mt-2">{{ message }}</div>{% endif %}
@@ -180,13 +182,13 @@
         <div class="irr-card-title mb-0"><i class="bi bi-journals me-2" style="color:#6366f1"></i>Detailed Log Viewer
         </div>
         <form method="get" action="{{ url_for('dashboard.index') }}" class="d-flex gap-2 flex-wrap align-items-center">
-          <select name="severity" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+          <select id="severity_filter" name="severity" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()" aria-label="Filter by severity">
             <option value="">All</option>
             {% for sev in ['CRITICAL', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'FATAL'] %}
             <option value="{{ sev }}" {{ 'selected' if severity_filter == sev }}>{{ sev }}</option>
             {% endfor %}
           </select>
-          <input name="search" class="form-control form-control-sm" placeholder="Search…" style="width:180px" value="{{ search }}">
+          <input id="log_search" name="search" class="form-control form-control-sm" placeholder="Search…" style="width:180px" value="{{ search }}" aria-label="Search log messages">
           <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
         </form>
       </div>

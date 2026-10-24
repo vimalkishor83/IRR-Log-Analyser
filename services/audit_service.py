@@ -2,8 +2,8 @@
 
 from flask import session
 
-from core.database import db
-from core.models import AuditLog
+from db import db
+from models.audit_log import AuditLog
 
 
 def log_action(action, details=""):
