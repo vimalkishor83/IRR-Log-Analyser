@@ -1,10 +1,6 @@
-"""Pulls data from ServiceNow and saves only quality records (see _validate_incident)."""
-
 import logging
 import re
-from datetime import datetime
-
-from db import db
+from db import db, get_now
 from models.incident import Incident
 from models.kb_article import KBArticle
 from models.sync_history import SyncHistory
@@ -12,13 +8,9 @@ from services.snow_client import ServiceNowClient
 
 log = logging.getLogger(__name__)
 
-# States we accept as "done" and worth storing
 VALID_STATES = {"resolved", "closed"}
-
-# Any resolution text that appears on 5+ incidents is likely a copy-paste template
 MAX_DUPLICATE_RESOLUTIONS = 5
 
-# Short words that indicate a throwaway / placeholder entry
 JUNK_PHRASES = {
     "test", "testing", "n/a", "na", "none", "tbd", "todo",
     "see above", "see comments", "as per call", "as discussed",
@@ -28,24 +20,20 @@ JUNK_PHRASES = {
 
 
 class SyncService:
-
     def __init__(self, config):
         self.client = ServiceNowClient(config)
-
         raw = (config.get("SERVICENOW_ASSIGNMENT_GROUPS") or "").strip()
         self.allowed_groups = {g.strip().lower() for g in raw.split(",") if g.strip()}
 
     def sync_incidents(self):
-        """Pull Resolved/Closed incidents from ServiceNow, validating each one."""
         try:
             rows = self.client.get_closed_incidents(
                 assignment_groups=list(self.allowed_groups) if self.allowed_groups else None
             )
 
-            imported      = 0
-            updated       = 0
-            skip_reasons  = {}
-
+            imported = 0
+            updated = 0
+            skip_reasons = {}
             resolution_counts = _count_existing_resolutions()
 
             for row in rows:
@@ -53,27 +41,27 @@ class SyncService:
                 if reason:
                     category = _skip_category(reason)
                     skip_reasons[category] = skip_reasons.get(category, 0) + 1
-                    log.debug("Skipped %s — %s", row.get("number", "?"), reason)
+                    log.debug("Skipped %s: %s", row.get("number", "?"), reason)
                     continue
 
-                number  = row["number"].strip()
-                item    = Incident.query.filter_by(incident_number=number).first()
-                is_new  = item is None
+                number = row["number"].strip()
+                item = Incident.query.filter_by(incident_number=number).first()
+                is_new = item is None
                 if is_new:
                     item = Incident(incident_number=number)
 
                 resolution = _clean(row.get("close_notes") or "")
 
-                item.application       = _clean(row.get("category"))         or "Unknown"
-                item.server            = _clean(row.get("subcategory"))       or "Unknown"
-                item.environment       = _clean(row.get("category"))          or ""
+                item.application = _clean(row.get("category")) or "Unknown"
+                item.server = _clean(row.get("subcategory")) or "Unknown"
+                item.environment = _clean(row.get("category")) or ""
                 item.error_description = _clean(row.get("short_description")) or ""
-                item.exception_message = _clean(row.get("description"))       or ""
-                item.root_cause        = _clean(row.get("work_notes") or row.get("description") or "")
-                item.resolution        = resolution
-                item.assignment_group  = _clean(row.get("assignment_group"))  or "Application Team"
-                item.status            = _clean(row.get("state"))             or "Resolved"
-                item.updated_at        = datetime.utcnow()
+                item.exception_message = _clean(row.get("description")) or ""
+                item.root_cause = _clean(row.get("work_notes") or row.get("description") or "")
+                item.resolution = resolution
+                item.assignment_group = _clean(row.get("assignment_group")) or "Application Team"
+                item.status = _clean(row.get("state")) or "Resolved"
+                item.updated_at = get_now()
 
                 db.session.add(item)
                 resolution_counts[resolution] = resolution_counts.get(resolution, 0) + 1
@@ -85,7 +73,7 @@ class SyncService:
 
             db.session.commit()
             total_skipped = sum(skip_reasons.values())
-            skip_detail   = ", ".join(f"{c} {r}" for r, c in sorted(skip_reasons.items(), key=lambda x: -x[1]))
+            skip_detail = ", ".join(f"{c} {r}" for r, c in sorted(skip_reasons.items(), key=lambda x: -x[1]))
             msg = (
                 f"Imported {imported} new, updated {updated} existing, "
                 f"skipped {total_skipped} (failed validation)"
@@ -100,14 +88,13 @@ class SyncService:
             self._record_sync("servicenow_incidents", "Failed", str(err))
 
     def sync_kb_articles(self):
-        """Pull KB articles from ServiceNow, skipping junk or duplicate ones."""
         try:
-            rows     = self.client.get_kb_articles()
+            rows = self.client.get_kb_articles()
             imported = 0
-            skipped  = 0
+            skipped = 0
 
             for row in rows:
-                title      = _clean(row.get("short_description") or row.get("title") or "")
+                title = _clean(row.get("short_description") or row.get("title") or "")
                 resolution = _clean(row.get("text") or "")
 
                 if not title or len(title) < 10:
@@ -120,14 +107,16 @@ class SyncService:
                     skipped += 1
                     continue
 
-                db.session.add(KBArticle(
-                    title            = title,
-                    error_pattern    = title,
-                    root_cause       = _clean(row.get("description") or ""),
-                    resolution       = resolution or "See KB article for details.",
-                    assignment_group = _clean(row.get("assignment_group")) or "Application Team",
-                    active           = True,
-                ))
+                db.session.add(
+                    KBArticle(
+                        title=title,
+                        error_pattern=title,
+                        root_cause=_clean(row.get("description") or ""),
+                        resolution=resolution or "See KB article for details.",
+                        assignment_group=_clean(row.get("assignment_group")) or "Application Team",
+                        active=True,
+                    )
+                )
                 imported += 1
 
             db.session.commit()
@@ -141,12 +130,11 @@ class SyncService:
             self._record_sync("servicenow_kb", "Failed", str(err))
 
     def _validate_incident(self, row, resolution_counts):
-        """Run the six validation rules; return a failure reason or None."""
-        number      = (row.get("number") or "").strip()
+        number = (row.get("number") or "").strip()
         description = _clean(row.get("short_description") or "")
-        resolution  = _clean(row.get("close_notes") or "")
-        state       = (row.get("state") or "").strip().lower()
-        group       = (row.get("assignment_group") or "").strip().lower()
+        resolution = _clean(row.get("close_notes") or "")
+        state = (row.get("state") or "").strip().lower()
+        group = (row.get("assignment_group") or "").strip().lower()
 
         if not number:
             return "missing incident number"
@@ -165,7 +153,6 @@ class SyncService:
         if _is_junk(resolution):
             return f"junk resolution: '{resolution[:40]}'"
 
-        # Reject copy-paste resolutions (same text on 5+ records)
         count = resolution_counts.get(resolution, 0)
         if count >= MAX_DUPLICATE_RESOLUTIONS:
             return f"duplicate resolution used {count} times already"
@@ -179,28 +166,27 @@ class SyncService:
         return None
 
     def _record_sync(self, source, status, message):
-        """Save one sync result row so admins can see the last sync outcome."""
         try:
-            db.session.add(SyncHistory(
-                source         = source,
-                last_sync_time = datetime.utcnow(),
-                status         = status,
-                message        = message,
-            ))
+            db.session.add(
+                SyncHistory(
+                    source=source,
+                    last_sync_time=get_now(),
+                    status=status,
+                    message=message,
+                )
+            )
             db.session.commit()
         except Exception as err:
             log.error("Could not save sync record: %s", err)
 
 
 def _clean(text):
-    """Strip and collapse whitespace; return "" if text is None."""
     if not text:
         return ""
     return re.sub(r"\s+", " ", str(text).strip())
 
 
 def _is_junk(text):
-    """Return True if the text is a known throwaway/placeholder value."""
     if not text:
         return True
     normalised = text.strip().lower()
@@ -212,7 +198,6 @@ def _is_junk(text):
 
 
 def _skip_category(reason):
-    """Map a detailed validation reason to a short readable category label."""
     if "missing" in reason:
         return "missing required field"
     if "too short" in reason:
@@ -229,7 +214,6 @@ def _skip_category(reason):
 
 
 def _count_existing_resolutions():
-    """Build { resolution_text: count } from incidents already in the DB."""
     counts = {}
     for inc in Incident.query.with_entities(Incident.resolution).all():
         text = (inc.resolution or "").strip()

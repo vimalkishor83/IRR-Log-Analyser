@@ -1,5 +1,3 @@
-"""Admin panel routes: user management, sync controls, audit log."""
-
 import csv
 import io
 import logging
@@ -8,7 +6,7 @@ from flask import Blueprint, Response, redirect, render_template, request, url_f
 
 from services.audit_service import log_action as _audit
 from services.auth_service import ADMIN_MODULES, ALL_MODULES, MODULE_LABELS, role_required, user_modules
-from db import db
+from db import db, get_now
 from models.incident import Incident
 from models.kb_article import KBArticle
 from models.servicenow_group import ServiceNowGroup
@@ -47,8 +45,13 @@ def users_page():
     users = User.query.all()
     for u in users:
         u.module_list = user_modules(u)
-    return render_template("users.html", users=users, modules=_module_options(),
-                            status=request.args.get("status"), error=request.args.get("error"))
+    return render_template(
+        "users.html",
+        users=users,
+        modules=_module_options(),
+        status=request.args.get("status"),
+        error=request.args.get("error"),
+    )
 
 
 @admin_bp.get("/admin/users/add")
@@ -56,8 +59,13 @@ def users_page():
 def add_user_form():
     role = request.args.get("role", "Analyst")
     selected = ALL_MODULES if role == "Admin" else request.args.getlist("modules")
-    return render_template("user_form.html", user=None, modules=_module_options(),
-                            selected_modules=selected, role=role)
+    return render_template(
+        "user_form.html",
+        user=None,
+        modules=_module_options(),
+        selected_modules=selected,
+        role=role,
+    )
 
 
 @admin_bp.get("/admin/users/<int:user_id>/edit")
@@ -69,8 +77,13 @@ def edit_user_form(user_id):
         selected = ALL_MODULES if role == "Admin" else request.args.getlist("modules")
     else:
         selected = user_modules(user)
-    return render_template("user_form.html", user=user, modules=_module_options(),
-                            selected_modules=selected, role=role)
+    return render_template(
+        "user_form.html",
+        user=user,
+        modules=_module_options(),
+        selected_modules=selected,
+        role=role,
+    )
 
 
 @admin_bp.post("/admin/users/add")
@@ -78,8 +91,8 @@ def edit_user_form(user_id):
 def create_user():
     username = (request.form.get("username") or "").strip()
     password = request.form.get("password") or ""
-    role     = request.form.get("role", "Analyst")
-    modules  = request.form.getlist("modules")
+    role = request.form.get("role", "Analyst")
+    modules = request.form.getlist("modules")
 
     if not username or not password:
         return redirect(url_for("admin.users_page", error="Username and password are required."))
@@ -99,12 +112,12 @@ def create_user():
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
     password = request.form.get("password") or ""
-    role     = request.form.get("role", user.role)
-    modules  = request.form.getlist("modules")
+    role = request.form.get("role", user.role)
+    modules = request.form.getlist("modules")
 
     if password:
         user.set_password(password)
-    user.role    = role
+    user.role = role
     user.modules = _modules_str(role, modules)
     db.session.commit()
     _audit("update_user", user.username)
@@ -143,7 +156,6 @@ def sync_now():
 @admin_bp.post("/admin/retrain")
 @role_required("Admin")
 def retrain_now():
-    """Rebuild the TF-IDF search index without syncing from ServiceNow."""
     count = _rebuild_index()
     _audit("retrain", f"{count} documents indexed")
     return redirect(url_for("admin.admin_page", message=f"Index rebuilt with {count} documents."))
@@ -152,7 +164,6 @@ def retrain_now():
 @admin_bp.post("/admin/import-csv")
 @role_required("Admin")
 def import_csv_now():
-    """Bulk-import incidents from an uploaded CSV file (read in memory, no disk write)."""
     uploaded = request.files.get("file")
     if not uploaded or not uploaded.filename:
         return redirect(url_for("admin.admin_page", error="Please choose a CSV file first."))
@@ -161,28 +172,33 @@ def import_csv_now():
     imported, skipped = _import_incidents_csv(raw_bytes)
     count = _rebuild_index()
     _audit("import_csv", f"Imported {imported}, skipped {skipped}")
-    return redirect(url_for(
-        "admin.admin_page",
-        message=f"Import done: {imported} added, {skipped} skipped. Index rebuilt with {count} documents.",
-    ))
+    return redirect(
+        url_for(
+            "admin.admin_page",
+            message=f"Import done: {imported} added, {skipped} skipped. Index rebuilt with {count} documents.",
+        )
+    )
 
 
 @admin_bp.get("/admin/import-template")
 @role_required("Admin")
 def download_import_template():
-    """Download a sample CSV showing the expected columns for incident import."""
     headers = INCIDENT_CSV_FIELDS
     examples = [
-        ["INC0001001", "OrderService", "app-server-01", "Production",
-         "ORA-12541: TNS no listener", "java.sql.SQLException: Listener refused connection",
-         "Database listener was not running on port 1521",
-         "Started DB listener using: lsnrctl start. Verified connectivity.",
-         "DBA Team", "Resolved"],
-        ["INC0001002", "PaymentService", "app-server-02", "Production",
-         "Connection refused to 10.0.0.5:8080", "java.net.ConnectException: Connection refused",
-         "Target microservice was down after deployment",
-         "Restarted PaymentService pod. Added health-check to deployment pipeline.",
-         "Application Support", "Resolved"],
+        [
+            "INC0001001", "OrderService", "app-server-01", "Production",
+            "ORA-12541: TNS no listener", "java.sql.SQLException: Listener refused connection",
+            "Database listener was not running on port 1521",
+            "Started DB listener using: lsnrctl start. Verified connectivity.",
+            "DBA Team", "Resolved",
+        ],
+        [
+            "INC0001002", "PaymentService", "app-server-02", "Production",
+            "Connection refused to 10.0.0.5:8080", "java.net.ConnectException: Connection refused",
+            "Target microservice was down after deployment",
+            "Restarted PaymentService pod. Added health-check to deployment pipeline.",
+            "Application Support", "Resolved",
+        ],
     ]
     output = io.StringIO()
     csv.writer(output).writerows([headers, *examples])
@@ -228,7 +244,6 @@ def delete_snow_group(group_id):
 
 
 def _status_data():
-    """Build the system-status dict shown on the admin page and index status panel."""
     from flask import current_app
     from services import tfidf_engine
     from models.knowledge_entry import KnowledgeEntry
@@ -238,8 +253,8 @@ def _status_data():
         if not record:
             return None
         return {
-            "time":    record.last_sync_time.strftime("%Y-%m-%d %H:%M:%S") if record.last_sync_time else "",
-            "status":  record.status,
+            "time": record.last_sync_time.strftime("%Y-%m-%d %H:%M:%S") if record.last_sync_time else "",
+            "status": record.status,
             "message": record.message,
         }
 
@@ -247,47 +262,47 @@ def _status_data():
     snow_ok = bool(cfg.get("SERVICENOW_URL") and cfg.get("SERVICENOW_USERNAME") and cfg.get("SERVICENOW_PASSWORD"))
 
     return {
-        "tfidf_trained":       tfidf_engine.is_trained(),
-        "tfidf_documents":     tfidf_engine.document_count(),
-        "incident_count":      Incident.query.count(),
-        "kb_count":            KBArticle.query.filter_by(active=True).count(),
-        "knowledge_count":     KnowledgeEntry.query.filter_by(active=True).count(),
-        "snow_configured":     snow_ok,
-        "snow_url":            cfg.get("SERVICENOW_URL", ""),
+        "tfidf_trained": tfidf_engine.is_trained(),
+        "tfidf_documents": tfidf_engine.document_count(),
+        "incident_count": Incident.query.count(),
+        "kb_count": KBArticle.query.filter_by(active=True).count(),
+        "knowledge_count": KnowledgeEntry.query.filter_by(active=True).count(),
+        "snow_configured": snow_ok,
+        "snow_url": cfg.get("SERVICENOW_URL", ""),
         "last_sync_incidents": last_sync("servicenow_incidents"),
-        "last_sync_kb":        last_sync("servicenow_kb"),
+        "last_sync_kb": last_sync("servicenow_kb"),
     }
 
 
 def _modules_str(role, selected_modules):
-    """Comma-separated module list for storage. Admin role always gets all modules."""
     if role == "Admin":
         return ADMIN_MODULES
     return ",".join(m for m in selected_modules if m in ALL_MODULES)
 
 
 def _rebuild_index():
-    """Rebuild the TF-IDF search index from all DB data. Returns document count."""
     from services import tfidf_engine
     from models.knowledge_entry import KnowledgeEntry
-    incidents    = Incident.query.all()
-    kb_articles  = KBArticle.query.filter_by(active=True).all()
-    knowledge    = KnowledgeEntry.query.filter_by(active=True).all()
+
+    incidents = Incident.query.all()
+    kb_articles = KBArticle.query.filter_by(active=True).all()
+    knowledge = KnowledgeEntry.query.filter_by(active=True).all()
     return tfidf_engine.retrain(incidents, kb_articles, knowledge)
 
 
 def _import_incidents_csv(raw_bytes):
-    """Parse CSV from raw bytes and insert new incidents into the DB. Returns (imported_count, skipped_count)."""
     allowed_fields = set(INCIDENT_CSV_FIELDS)
     imported = skipped = 0
     text = raw_bytes.decode("utf-8-sig", errors="ignore")
     for row in csv.DictReader(io.StringIO(text)):
-        row    = {k.strip(): v for k, v in row.items()}
+        row = {k.strip(): v for k, v in row.items()}
         number = row.get("incident_number", "").strip()
         if not number or Incident.query.filter_by(incident_number=number).first():
             skipped += 1
             continue
-        db.session.add(Incident(**{k: v for k, v in row.items() if k in allowed_fields}))
+        item_data = {k: v for k, v in row.items() if k in allowed_fields}
+        item_data["updated_at"] = get_now()
+        db.session.add(Incident(**item_data))
         imported += 1
     db.session.commit()
     return imported, skipped

@@ -1,0 +1,6 @@
+﻿incident_number,application,server,environment,error_description,exception_message,root_cause,resolution,assignment_group,status,success_count
+INC000001,PaymentsApp,pay-app-01,PROD,ORA-12541 TNS no listener while connecting to payment database,java.sql.SQLRecoverableException,Listener Down,Restart Oracle listener and verify DB service registration,DBA Team,Resolved,15
+INC000002,OrdersApp,ord-app-02,PROD,Connection refused while calling inventory service,TimeoutError,Inventory server down,Restart inventory API service and validate firewall route,Application Team,Closed,9
+INC000003,BillingApp,bill-app-01,UAT,OutOfMemoryError during invoice batch,OutOfMemoryError,JVM Memory Exhausted,Increase heap size and restart batch JVM,Middleware Team,Resolved,12
+INC000004,CustomerPortal,cust-web-03,PROD,HTTP 500 NullPointerException in profile lookup,NullPointerException,Application Defect,Deploy fixed profile-service build and replay failed requests,Application Team,Resolved,7
+INC000005,ClaimsApp,claims-app-02,PROD,Disk space exceeded on application node,IOException,Filesystem Full,Archive old logs and extend filesystem,Unix Team,Closed,20
